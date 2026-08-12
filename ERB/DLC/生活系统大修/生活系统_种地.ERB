@@ -330,7 +330,7 @@ IF TALENT:MASTER:耕种Lv >= 6 && !GETBIT (FLAG:耕种BONUS取得状況, 3) && !
 	CALL 生活系统_天赋选择事件(3, 4)
 ENDIF
 ;隙间耕地条件达成提示（领取在实绩页）
-IF ITEM:910 == 0 && GETUNELENGTH418() >= 8 && TALENT:MASTER:耕种Lv >= 5
+IF ITEM:910 == 0 && 生活系统_畝数() >= 8 && TALENT:MASTER:耕种Lv >= 5
 	PRINTFORML 菜园已经开垦至8块，你的耕种技艺也已纯熟——可以前往实绩页领取「隙间耕地」了！
 ENDIF
 ;花屋解锁事件：今日通过育苗获得的模组苗 → 当晚把培育方法送去花屋，获得酬金并解锁出售

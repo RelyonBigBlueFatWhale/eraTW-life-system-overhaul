@@ -10,7 +10,7 @@
 #LOCALSSIZE 1
 
 ;当前畝数与上限
-LOCAL = GETUNELENGTH418()
+LOCAL = 生活系统_畝数()
 LOCAL:1 = 生活系统_畝上限()
 LOCAL:2 = LOCAL:1 - LOCAL    ;剩余可开垦数
 PRINTFORML 当前可耕土地：{LOCAL}/{LOCAL:1}块
@@ -48,7 +48,7 @@ ENDIF
 生活系统_开荒数 ++
 EXP:MASTER:耕种経験 += 2
 PRINTFORML 挥动锄头，开垦出了一片新的耕地！
-PRINTFORML 现在共有{GETUNELENGTH418()}块可耕种土地（上限{LOCAL:1}块）
+PRINTFORML 现在共有{生活系统_畝数()}块可耕种土地（上限{LOCAL:1}块）
 ;消耗（时停折抵 TSP）
 IF FLAG:70 == 0
 	TIME += 900
@@ -81,7 +81,7 @@ SIF !家庭菜園可(CFLAG:MASTER:現在位置) && !IS_GAP_GUEST(MASTER)
 SIF !ITEM:150
 	RETURN 0
 ;已经开垦完毕
-SIF GETUNELENGTH418() >= 生活系统_畝上限()
+SIF 生活系统_畝数() >= 生活系统_畝上限()
 	RETURN 0
 ;気力0
 SIF BASE:MASTER:気力 <= 0

@@ -20,7 +20,7 @@
 #LOCALSSIZE 1
 ;LOCAL:1 = 1 + FLAG:畑拡張
 ;生活系统大修：分页显示（每页8畝，超过一页显示翻页）
-LOCAL:1 = GETUNELENGTH418()
+LOCAL:1 = 生活系统_畝数()
 LOCAL:2 = 0    ;页码
 $畝显示
 LOCAL:5 = LINECOUNT    ;记录菜单起始行（翻页清屏用）
@@ -163,7 +163,7 @@ ELSEIF 行動番号 == 2
 ;全収穫追加
 ELSEIF 行動番号 == 6
 	;PRINTFORML 全ての畝を収穫します
-	畝尺寸 = GETUNELENGTH418()
+	畝尺寸 = 生活系统_畝数()
 	FOR LOCAL,0,畝尺寸
 		LOCALS = %HATAKE_NAME:LOCAL%
 		行動コスト += HERVEST(LOCAL, LOCALS)
@@ -193,7 +193,7 @@ ELSEIF 行動番号 == 4 && ITEM:簡易泳池 && GETBIT (FLAG:泳池, 2)
 	ELSE
 		;PLANT_DRY:ARG = 0
 		
-		畝尺寸 = GETUNELENGTH418()
+		畝尺寸 = 生活系统_畝数()
 		FOR LOCAL,0, 畝尺寸
 			PLANT_DRY:LOCAL = 0
 		NEXT
