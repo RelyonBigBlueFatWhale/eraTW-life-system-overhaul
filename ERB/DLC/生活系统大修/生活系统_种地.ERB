@@ -7,7 +7,7 @@
 ;
 ; 功能：
 ; 1. 育苗指令（COMF471 育苗）：把采集素材育成可种植的种子
-; 2. 新种子作物（山菜の種 等）：可在家庭菜园种植，
+; 2. 新种子作物（山菜种子 等）：可在家庭菜园种植，
 ;    收获量按成品稀有度分档，熟期收获量翻倍；
 ;    浆果/菌菇类作物收获后保留植株，可再收一茬
 ;========================================================
@@ -105,7 +105,7 @@ SELECTCASE ARG
 	;育苗产物（按对应成材的适宜季节）
 	CASE 193                ;山菜（春）
 		RETURNF 1
-	CASE 194, 202           ;薬草/高級薬草（春夏）
+	CASE 194, 202           ;药草/高級药草（春夏）
 		RETURNF 3
 	CASE 195                ;树莓（夏）
 		RETURNF 2
@@ -113,7 +113,7 @@ SELECTCASE ARG
 		RETURNF 6
 	CASE 197, 198, 199, 200, 203, 204, 205, 206, 207, 209, 210, 211, 217   ;菌菇/薯类/秋收作物
 		RETURNF 4
-	CASE 201, 208, 218      ;毒草/特薬草/曼陀罗草（夏）
+	CASE 201, 208, 218      ;毒草/特药草/曼陀罗草（夏）
 		RETURNF 2
 	CASE 219                ;雪霊草（冬）
 		RETURNF 8
@@ -217,7 +217,7 @@ FOR LOCAL:1, 0, ARG:1
 		PLANT_FOOD:(ARG + LOCAL:1) = 1
 		FLAG:天滴坤神 = 1
 	ENDIF
-	HATAKE_NAME:(ARG + LOCAL:1) = %ITEMNAME_TR((苗対応作物番号取得(LOCAL)))%
+	HATAKE_NAME:(ARG + LOCAL:1) = %ITEMNAME_TR((生活系统_苗対応作物番号取得(LOCAL)))%
 	;天赋：沃土（种植免费施肥，由子系统开关控制）
 	IF 生活系统_种地 && TALENT:MASTER:沃土
 		PLANT_FOOD:(ARG + LOCAL:1) = 1
@@ -344,7 +344,7 @@ FOR LOCAL, 193, 220
 	花屋苗解锁:LOCAL = 1
 	;苗→对应成材，酬金 = 成材出售金额（定价）×10，并附赠10个成材（补充低级植株收益）
 	;注意：GET_ITEM 需用原语名（ITEMNAME）查询，不能用翻译名（ITEMNAME_TR）——翻译可能与原名不同（如 山菜→野菜）
-	LOCAL:1 = 苗対応作物番号取得(LOCAL)
+	LOCAL:1 = 生活系统_苗対応作物番号取得(LOCAL)
 	PRINTFORMW 你将「%ITEMNAME_TR((LOCAL:1))%」的培育方法送到了花屋，花屋对你表示感谢
 	MONEY += ITEMPRICE:(LOCAL:1) * 10
 	PRINTFORMW 获得了酬金%金額表示(ITEMPRICE:(LOCAL:1) * 10)%元！
@@ -361,66 +361,62 @@ RETURN
 ; 育苗产物走显式映射表；育苗设施（908）名字含"苗"但并非作物，返回自身
 ; 注：本函数原位于 COMF418，为减少原位修改迁移至此（调用点不变）
 ;--------------------------------------------------------
-@苗対応作物番号取得(ARG)
-#FUNCTION
-SELECTCASE ARG
-	;育苗设施（家具908）名字含"苗"但并非作物，返回自身避免+200越界
-	CASE 908
-		RETURNF 908
-	;新种子作物（育苗产物）→ 成品映射
-	CASE 193
-		RETURNF 611	;山菜の種→山菜
-	CASE 194
-		RETURNF 607	;薬草の種→薬草
-	CASE 195
-		RETURNF 626	;树莓の種→树莓
-	CASE 196
-		RETURNF 665	;山葡萄の挿し木→山葡萄
-	CASE 197
-		RETURNF 600	;普通菌菇の胞子→普通的菌菇
-	CASE 198
-		RETURNF 601	;毒菌菇の胞子→毒菌菇
-	CASE 199
-		RETURNF 602	;黏性菌菇の胞子→黏性菌菇
-	CASE 200
-		RETURNF 616	;山芋の種芋→山芋
-	CASE 201
-		RETURNF 612	;毒草の種→毒草
-	CASE 202
-		RETURNF 608	;高級薬草の種→高級薬草
-	CASE 203
-		RETURNF 603	;冬虫夏草の菌糸→冬虫夏草
-	CASE 204
-		RETURNF 617	;姜黄の根茎→姜黄
-	CASE 205
-		RETURNF 628	;木通果の種→木通果
-	CASE 206
-		RETURNF 614	;彼岸花の球根→彼岸花
-	CASE 207
-		RETURNF 618	;高麗人参の根苗→高麗人参
-	CASE 208
-		RETURNF 613	;特薬草の種→特薬草
-	CASE 209
-		RETURNF 604	;可疑菌菇の胞子→可疑菌菇
-	CASE 210
-		RETURNF 605	;魔法菌菇の胞子→魔法菌菇
-	CASE 211
-		RETURNF 619	;苦根の根挿し→苦根
-	CASE 217
-		RETURNF 653	;魔界菌菇の胞子→魔界菌菇
-	CASE 218
-		RETURNF 620	;曼陀罗草の根→曼陀罗草
-	CASE 219
-		RETURNF 615	;雪霊草の種→雪霊草
-	CASEELSE
-ENDSELECT
-IF STRCOUNT(ITEMNAME:ARG, "苗")
-	IF ARG == GETNUM(ITEM, "跳蛋苗")
-		LOCAL = GETNUM(ITEM, "跳蛋")
-	ELSE
-		LOCAL = ARG + 200
+@生活系统_菜园生长
+#LOCALSIZE 2
+#LOCALSSIZE 1
+FOR LOCAL,0,240
+	IF PLANT_TYPE:LOCAL
+		SIF FLAG:澆水代行
+			PLANT_DRY:LOCAL = 0
+		PLANT_DAYS:LOCAL ++
+		PLANT_DRY:LOCAL ++
+
+		;季节枯萎判定（温室大棚 909 时无视季节）
+		LOCAL:1 = 生活系统_植株季节(PLANT_TYPE:LOCAL)
+		IF ITEM:909 || (LOCAL:1 & (1 << (DAY:2 - 1)))
+			;季节适宜（或有温室）→ 正常生长
+			IF MAIN_MAP == 9
+				PLANT_GROW:LOCAL ++
+				;肥やしを撒いてある場合は追加
+				SIF PLANT_FOOD:LOCAL && PLANT_GROW:LOCAL < 10
+					PLANT_GROW:LOCAL ++
+			ELSE
+				SELECTCASE TIME:5
+				CASE 0,1
+					PLANT_GROW:LOCAL ++
+					;肥やしを撒いてある場合は追加
+					SIF PLANT_FOOD:LOCAL && PLANT_GROW:LOCAL < 10
+						PLANT_GROW:LOCAL ++
+				CASE 2,3
+					PLANT_GROW:LOCAL += RAND:2
+					SIF PLANT_FOOD:LOCAL && PLANT_GROW:LOCAL < 10
+						PLANT_GROW:LOCAL ++
+				CASE 4 TO 7
+					PLANT_DRY:LOCAL = 0
+					;肥やしを撒いてある場合は1/2の確率でさらに追加
+					SIF PLANT_FOOD:LOCAL && PLANT_GROW:LOCAL < 10
+						PLANT_GROW:LOCAL += RAND:2
+				CASE 8 TO 13
+					PLANT_GROW:LOCAL -= RAND:2
+				ENDSELECT
+			ENDIF
+			;三粒の天滴を所有している場合は澆水済み＆成長に補正
+			IF ITEM:三粒の天滴
+				IF FLAG:天滴坤神 && PLANT_DRY:LOCAL > 2
+					PRINTFORML 坤神的恩惠滋润了干涸的田地
+					PLANT_DRY:LOCAL = 0
+					FLAG:天滴坤神 = 0
+				ENDIF
+				SIF PLANT_GROW:LOCAL < 10 && !RAND:4
+					PLANT_GROW:LOCAL ++
+			ENDIF
+			;天赋：催熟（进入果期时直接成熟）
+			SIF TALENT:MASTER:催熟 && PLANT_GROW:LOCAL == 8
+				PLANT_GROW:LOCAL = 10
+		ELSE
+			;季节不符 → 立即枯萎（枯死状态，需拔除重种）
+			PLANT_GROW:LOCAL = 11
+		ENDIF
 	ENDIF
-ELSE
-	LOCAL = ARG
-ENDIF
-RETURNF LOCAL
+NEXT
+RETURN

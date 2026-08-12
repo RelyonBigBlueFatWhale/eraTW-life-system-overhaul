@@ -93,10 +93,6 @@ SQL_EXECUTE_NONQUERY "QOL_DISH_DB", @"CREATE TABLE IF NOT EXISTS _meta (key TEXT
 LOCALS '= SQL_P_EXECUTE_SCALAR_STRING("QOL_DISH_DB", "SELECT value FROM _meta WHERE key = 'pharma_schema_version'")
 SIF LOCALS != @"{NOW_VERSION}"
 	CALL QOL_PHARMA_DATA_REGISTER
-;生活系统大修：鸭蛋→待腌制的咸鸭蛋（10鸭蛋+1平价食材→10个，每次启动幂等注册）
-;素材以"/"分隔：鸭蛋(714)重复10次=需10个，平价食材(81)1次=需1个
-CALL QOL_RECIPE_DATA_SET(GETNUM(ITEM, "待腌制的咸鸭蛋"), 1, "714/714/714/714/714/714/714/714/714/714/81", 10)
-
 ;================================================
 ;@QOL_PHARMA_RANK_REGISTER
 ;从 RECIPE_DATA.ERB 的 @PHARMACY_RANK(ARG:0, 导出模式) 导出模式批量注册调合等级。

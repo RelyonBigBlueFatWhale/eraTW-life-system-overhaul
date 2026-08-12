@@ -4,9 +4,10 @@
 
 **eraTW（Emuera）生活玩法增强模组 —— 养鸡 · 种地 · 酿酒 · 钓鱼**
 
-![Version](https://img.shields.io/badge/version-v1.0-blue)
+![Version](https://img.shields.io/badge/version-v2.0-blue)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Emuera_skiaV10-orange)
+![Baseline](https://img.shields.io/badge/baseline-develop_e9220932-blueviolet)
 ![License](https://img.shields.io/badge/license-CC0-lightgrey)
 
 </div>
@@ -19,7 +20,9 @@
 四个互相独立、可随时启停的子系统，覆盖**养殖、农耕、酿酒、垂钓**四条生活产业链。
 所有子系统由「DLC 设置」菜单统一管理，**关闭时完全恢复原版逻辑**，不影响原版游玩与继承更新。
 
-> 设计原则：DLC 逻辑全部限定在开关明确的代码块内；不包装替换原版函数；原位文件仅保留最小侵入点。
+> **基线**：本补丁基于 [eraTW画蛇又添足（eratw-sub-modding）](https://gitgud.io/era-games-zh/touhou/eratw-sub-modding) develop 分支（e9220932）。
+> **架构**：上游本体文件保留原样，仅入口处添加「开关 → 转入 DLC 实现」的 JUMP 分支；
+> 全部增强逻辑位于 `ERB/DLC/生活系统大修/`，开关关闭时本体行为完全不变，便于 rebase 上游。
 
 ---
 

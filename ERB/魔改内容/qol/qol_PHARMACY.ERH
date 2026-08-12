@@ -6,4 +6,4 @@
 #DIMS CONST COND_item = "item"
 
 ;生活系统大修：6→12（咸鸭蛋调合配方含11段素材：鸭蛋×10+平价食材×1）
-#DIM CONST QOL_MAX_INGREDIENTS = 12
+#DIM CONST QOL_MAX_INGREDIENTS = 24

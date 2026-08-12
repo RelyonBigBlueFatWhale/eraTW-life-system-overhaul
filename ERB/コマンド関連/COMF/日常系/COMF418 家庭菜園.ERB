@@ -1,115 +1,38 @@
-;-------------------------------------------------
+﻿;-------------------------------------------------
 ;家庭菜園
 ;日常系指令、レベル1
 ;-------------------------------------------------
 @COM418
-#LOCALSIZE 6
-#LOCALSSIZE 1
+;生活系统大修·种地：开关开启时使用增强版菜园（实现位于 DLC/生活系统大修/生活系统_COM418.ERB）
+IF 生活系统_种地
+	CALL 生活系统_COM418
+	RETURN RESULT
+ENDIF
 ;LOCAL:1 = 1 + FLAG:畑拡張
-;生活系统大修：分页显示（每页8畝，超过一页显示翻页）
 LOCAL:1 = GETUNELENGTH418()
-LOCAL:2 = 0    ;页码
-$畝显示
-LOCAL:5 = LINECOUNT    ;记录菜单起始行（翻页清屏用）
-LOCAL:3 = LOCAL:2 * 8          ;本页起始全局畝号
-LOCAL:4 = LOCAL:1 - LOCAL:3    ;本页畝数
-SIF LOCAL:4 > 8
-	LOCAL:4 = 8
-FOR LOCAL,0,LOCAL:4
-	CALL SHOW_PLANT(LOCAL:3 + LOCAL)
+
+FOR LOCAL,0, LOCAL:1
+	CALL SHOW_PLANT(LOCAL)
 NEXT
-;翻页与退出（超过一页才显示翻页选项）
-SIF LOCAL:2 > 0
-	PRINTL [998] 上一页
-SIF LOCAL:3 + 8 < LOCAL:1
-	PRINTL [997] 下一页
-SIF 生活系统_种地
-	PRINTFORML [996] 翻到指定页（共{(LOCAL:1 - 1) / 8 + 1}页）
-SIF 生活系统_种地
-	PRINTL [95] 一键播种（本页）　[96] 一键施肥（本页）
 PRINTL [999] 算了
 $INPUT_LOOP
 INPUT
-SELECTCASE RESULT
-	CASE 998
-		LOCAL:2 --
-		CLEARLINE LINECOUNT - LOCAL:5
-		GOTO 畝显示
-	CASE 997
-		LOCAL:2 ++
-		CLEARLINE LINECOUNT - LOCAL:5
-		GOTO 畝显示
-	CASE 996
-		;翻到指定页（由子系统开关控制）
-		SIF !生活系统_种地
-			RETURN -1
-		PRINTFORML 输入要翻到的页码（1~{(LOCAL:1 - 1) / 8 + 1}）：
-		$页码输入
-		INPUT
-		IF INRANGE(RESULT, 1, (LOCAL:1 - 1) / 8 + 1)
-			LOCAL:2 = RESULT - 1
-			CLEARLINE LINECOUNT - LOCAL:5
-			GOTO 畝显示
-		ELSE
-			PRINTFORML 没有这个页码……
-			CLEARLINE 2
-			GOTO 页码输入
-		ENDIF
-	CASE 95
-		;一键播种（本页空畝，由子系统开关控制）
-		SIF !生活系统_种地
-			RETURN -1
-		CALL 生活系统_一键播种(LOCAL:3, LOCAL:4)
-		IF RESULT > 0
-			IF FLAG:70 == 0
-				TIME += RESULT
-				M_TFLAG:时间因子类型 = TimeFactor_采集
-			ELSE
-				BASE:MASTER:TSP -= RESULT * 3
-			ENDIF
-		ENDIF
-		;等待确认：让"等级不足/季节不符/完成"等提示可见（否则会被下方清屏抹掉）
-		WAIT
-		CLEARLINE LINECOUNT - LOCAL:5
-		GOTO 畝显示
-	CASE 96
-		;一键施肥（本页已种畝，由子系统开关控制）
-		SIF !生活系统_种地
-			RETURN -1
-		CALL 生活系统_一键施肥(LOCAL:3, LOCAL:4)
-		IF RESULT > 0
-			IF FLAG:70 == 0
-				TIME += RESULT
-				M_TFLAG:时间因子类型 = TimeFactor_采集
-			ELSE
-				BASE:MASTER:TSP -= RESULT * 3
-			ENDIF
-		ENDIF
-		;等待确认：让提示可见（否则会被下方清屏抹掉）
-		WAIT
-		CLEARLINE LINECOUNT - LOCAL:5
-		GOTO 畝显示
-	CASE 999
+;現状時間停止中は表示のみ
+IF INRANGE(RESULT / 100, 0, LOCAL:1)
+	CALL FARMING(RESULT / 100, RESULT % 100)
+	IF RESULT == 0
 		RETURN -1
-	CASEELSE
-		;输入全局畝号（与显示一致）：畝号*100+行动号
-		IF INRANGE(RESULT / 100, LOCAL:3, LOCAL:3 + LOCAL:4 - 1)
-			LOCAL:3 = RESULT / 100
-			CALL FARMING(LOCAL:3, RESULT % 100)
-			IF RESULT == 0
-				RETURN -1
-			ELSEIF FLAG:70 == 0
-				TIME += RESULT
-				M_TFLAG:时间因子类型 = TimeFactor_采集
-			ELSE
-				BASE:MASTER:TSP -= RESULT * 3
-			ENDIF
-			RETURN 0
-		ELSE
-			CLEARLINE 1
-			GOTO INPUT_LOOP
-		ENDIF
-ENDSELECT
+	ELSEIF FLAG:70 == 0
+		TIME += RESULT		
+		M_TFLAG:时间因子类型 = TimeFactor_采集
+	ELSE
+		BASE:MASTER:TSP -= RESULT * 3
+	ENDIF
+	RETURN 0
+ELSE
+	;TIME += 5
+	RETURN -1
+ENDIF
 
 
 @FARMING(ARG, 行動番号)
@@ -124,7 +47,7 @@ IF 行動番号 == 0
 		PRINTFORML 已经种植了%LOCALS%
 		;行動コスト += 5
 	ELSE
-		PRINTL 要种什么呢？ (持有数)
+		PRINTL 要种什么呢？ (苗/作物数)
 		CALL INPLANT(ARG)
 		IF RESULT
 			行動コスト += 10
@@ -170,7 +93,6 @@ ELSEIF 行動番号 == 3
 	PLANT_DRY:ARG = 0
 	HATAKE_NAME:ARG =
 	PLANT_FOOD:ARG = 0
-	PLANT_HARVESTED:ARG = 0
 	PRINTFORML 拔掉了%LOCALS%
 	行動コスト += 10
 ;畑が拡張されたら全体にします
@@ -206,39 +128,20 @@ RETURN 行動コスト
 
 @INPLANT(ARG)
 FOR LOCAL, 0, 1000
-	;生活系统大修：新种子作物（育苗产物193~219）也可种植；908育苗设施是家具非苗
-	IF (STRCOUNT(ITEMNAME:LOCAL, "苗") || INRANGE(LOCAL, 193, 219)) && LOCAL != 908
+	IF STRCOUNT(ITEMNAME:LOCAL, "苗")
 		;苗以外を除外
 		SIF ITEM:LOCAL
-			PRINTFORML [{LOCAL}]%ITEMNAME_TR((LOCAL)), 14, LEFT%（持有{ITEM:(LOCAL), 2, RIGHT}个）
+			PRINTFORML [{LOCAL}]%ITEMNAME_TR((LOCAL)), 14, LEFT%({ITEM:(LOCAL), 2, RIGHT}/{ITEM:(苗対応作物番号取得(LOCAL)), 2, RIGHT})
 	ENDIF
 NEXT
 PRINTL [999] 算了
 $INPUT_LOOP
 INPUT
-IF ITEM:RESULT && (STRCOUNT(ITEMNAME:RESULT, "苗") || INRANGE(RESULT, 193, 219)) && RESULT != 908
-	;生活系统大修：等级/季节限制（由子系统开关控制）
-	IF 生活系统_种地
-		;耕种等级限制（植株等级 > 耕种Lv 不可种）
-		IF 生活系统_植株等级(RESULT) > TALENT:MASTER:耕种Lv
-			PRINTFORML 你的耕种技艺还不足以驾驭这种作物……
-			RETURN 0
-		ENDIF
-		;季节限制（温室大棚 909 可无视）
-		IF ITEM:909 == 0
-			LOCAL = 生活系统_植株季节(RESULT)
-			IF !(LOCAL & (1 << (DAY:2 - 1)))
-				PRINTFORML 现在不是适宜种植的季节……
-				RETURN 0
-			ENDIF
-		ENDIF
-	ENDIF
+IF ITEM:RESULT && STRCOUNT(ITEMNAME:RESULT, "苗")
 	PRINTFORML 在畑{ARG}里种上了%ITEMNAME_TR((RESULT))%
 	ITEM:RESULT -= 1
 	PLANT_TYPE:ARG = RESULT
 	PLANT_DRY:ARG = 1
-	;生活系统大修：重置已收果期标记
-	PLANT_HARVESTED:ARG = 0
 	;三粒の天滴を持っている場合、植えてすぐに施肥、水撒き完了状態に
 	IF ITEM:三粒の天滴
 		PLANT_DRY:ARG = 0
@@ -246,10 +149,6 @@ IF ITEM:RESULT && (STRCOUNT(ITEMNAME:RESULT, "苗") || INRANGE(RESULT, 193, 219)
 		FLAG:天滴坤神 = 1
 	ENDIF
 	HATAKE_NAME:ARG = %ITEMNAME_TR((苗対応作物番号取得(PLANT_TYPE:ARG)))%
-	;天赋：沃土（种植免费施肥，由子系统开关控制）
-	IF 生活系统_种地 && TALENT:MASTER:沃土
-		PLANT_FOOD:ARG = 1
-	ENDIF
 	RETURN 1
 ELSE
 	RETURN 0
@@ -265,7 +164,6 @@ IF ITEMNAME:苗対応作物番号取得(PLANT_TYPE:ARG) == ""
 	PLANT_DRY:ARG = 0
 	HATAKE_NAME:ARG =
 	PLANT_FOOD:ARG = 0
-	PLANT_HARVESTED:ARG = 0
 ENDIF
 IF PLANT_TYPE:ARG > 0
 	SETCOLOR 0x00FF00
@@ -274,25 +172,22 @@ IF PLANT_TYPE:ARG > 0
 		SETCOLOR 0x994C00
 		PRINT （枯）
 	ELSE
-			SELECTCASE PLANT_GROW:ARG
-				CASE 10
-					SETCOLOR 0xFF0000
-					PRINT （熟）
-				CASE 8,9
-					SETCOLOR 0xFF8000
-					PRINT （果）
-				CASE 6,7
-					SETCOLOR 0xFFFF00
-					PRINT （花）
-				CASE 4,5
-					PRINT （叶）
-				CASEELSE
-					PRINT （苗）
-			ENDSELECT 
-			;生活系统大修：保留植株作物已收过果期
-			SIF PLANT_HARVESTED:ARG
-				PRINT 　（已采一茬）
-		ENDIF
+		SELECTCASE PLANT_GROW:ARG
+			CASE 10
+				SETCOLOR 0xFF0000
+				PRINT （熟）
+			CASE 8,9
+				SETCOLOR 0xFF8000
+				PRINT （果）
+			CASE 6,7
+				SETCOLOR 0xFFFF00
+				PRINT （花）
+			CASE 4,5
+				PRINT （叶）
+			CASEELSE
+				PRINT （苗）
+		ENDSELECT 
+	ENDIF
 	IF !PLANT_DRY:ARG
 		SETCOLOR C_AQUA
 		PRINT 　撒水完毕
@@ -373,6 +268,19 @@ ELSE
 ENDIF
 PRINTL
 
+@苗対応作物番号取得(ARG)
+#FUNCTION
+IF STRCOUNT(ITEMNAME:ARG, "苗")
+	IF ARG == GETNUM(ITEM, "跳蛋苗")
+		LOCAL = GETNUM(ITEM, "跳蛋")
+	ELSE
+		LOCAL = ARG + 200
+	ENDIF
+ELSE
+	LOCAL = ARG
+ENDIF
+RETURNF LOCAL
+
 @収穫可能(ARG)
 #FUNCTION
 RETURNF PLANT_GROW:ARG > 7 && !(PLANT_DRY:ARG > 4 || PLANT_GROW:ARG > 10)
@@ -408,24 +316,17 @@ RETURN 1
 @GETUNELENGTH418()
 #FUNCTION
 #DIM 畝尺寸
-;生活系统大修：子系统开启时 = 基础（采集+农民）+ 开荒数，上限8（隙间耕地910时240）；关闭时保持原版
-IF 生活系统_种地
-	畝尺寸 = 生活系统_基础畝数() + 生活系统_开荒数
-	IF 畝尺寸 > 生活系统_畝上限()
-		畝尺寸 = 生活系统_畝上限()
-	ENDIF
+
+IF TALENT:MASTER:採集Lv > 5
+	畝尺寸 = 1 + 3
+ELSEIF TALENT:MASTER:採集Lv > 4
+	畝尺寸 = 1 + 2
+ELSEIF TALENT:MASTER:採集Lv > 2
+	畝尺寸 = 1 + 2
+ELSEIF TALENT:MASTER:採集Lv > 0
+	畝尺寸 = 1 + 1
 ELSE
-	;原版逻辑：基础1 + 采集等级加成
 	畝尺寸 = 1
-	IF TALENT:MASTER:採集Lv > 5
-		畝尺寸 += 3
-	ELSEIF TALENT:MASTER:採集Lv > 4
-		畝尺寸 += 2
-	ELSEIF TALENT:MASTER:採集Lv > 2
-		畝尺寸 += 2
-	ELSEIF TALENT:MASTER:採集Lv > 0
-		畝尺寸 += 1
-	ENDIF
 ENDIF
 RETURNF 畝尺寸
 
@@ -443,58 +344,6 @@ RETURNF 畝尺寸
 	;八百屋で購入できるようになったため収穫条件の厳格化
 	IF 収穫可能(ARG) == 0
 		;PRINTL 不是可以收获的状态
-		RETURNF 行動コスト
-	ENDIF
-	;生活系统大修：新种子作物（育苗产物193~219）两阶段收获
-	IF INRANGE(PLANT_TYPE:ARG, 193, 219)
-		;基础收获量按成品稀有度（价格）分档
-		LOCAL = 生活系统_收获基础量(苗対応作物番号取得(PLANT_TYPE:ARG))
-		;熟期（PLANT_GROW>=10）收获量翻倍
-		SIF PLANT_GROW:ARG >= 10
-			LOCAL *= 2
-		;施肥/天滴/长期栽培加成
-		SIF PLANT_FOOD:ARG
-			LOCAL += LOCAL / 3
-		SIF FLAG:天滴坤神 && RAND:2 == 1
-			LOCAL += LOCAL / 3
-		SIF PLANT_DAYS:ARG > 9
-			LOCAL += LOCAL / 3
-		SIF TCVAR:MASTER:豊穣
-			LOCAL += LOCAL / 5
-		IF MAGIC_DLC_大成功相关
-			LOCAL += LOCAL * MAGIC_SuccessRate() /200
-		ENDIF
-		;妖精之友加成
-		LOCAL += Add_Apply_Fairy_Title_Bonus("gardening")
-		;天赋：丰收（熟期收获额外1~3个）/ 双收（10%概率翻倍，可叠加，由子系统开关控制）
-		SIF 生活系统_种地 && TALENT:MASTER:丰收 && PLANT_GROW:ARG >= 10
-			LOCAL += 1 + RAND:3
-		SIF 生活系统_种地 && TALENT:MASTER:双收 && !RAND:10
-			LOCAL *= 2
-		;保留植株作物（浆果/菌菇）：果期收获后不拔除，等熟期再收一茬
-		IF 生活系统_保留植株(PLANT_TYPE:ARG) && !PLANT_HARVESTED:ARG && PLANT_GROW:ARG < 10
-			PLANT_HARVESTED:ARG = 1
-			PRINTFORML 收获了{LOCAL}个%ARGS%，植株保留了下来，还能再收一茬……
-			ITEM:(苗対応作物番号取得(PLANT_TYPE:ARG)) += LOCAL
-			;生活系统大修：耕种经验（收获时获得 = 收获个数 × 植株等级；未登记等级保底1点，由子系统开关控制）
-			SIF 生活系统_种地
-				EXP:MASTER:耕种経験 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
-			行動コスト += 20
-			RETURNF 行動コスト
-		ENDIF
-		PRINTFORML 收获了{LOCAL}个%ARGS%
-		ITEM:(苗対応作物番号取得(PLANT_TYPE:ARG)) += LOCAL
-		;生活系统大修：耕种经验（收获时获得 = 收获个数 × 植株等级；未登记等级保底1点，由子系统开关控制）
-		SIF 生活系统_种地
-			EXP:MASTER:耕种経験 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
-		PLANT_TYPE:ARG = 0
-		PLANT_DAYS:ARG = 0
-		PLANT_GROW:ARG = 0
-		PLANT_DRY:ARG = 0
-		HATAKE_NAME:ARG =
-		PLANT_FOOD:ARG = 0
-		PLANT_HARVESTED:ARG = 0
-		行動コスト += 20
 		RETURNF 行動コスト
 	ENDIF
 	SIF PLANT_DAYS:ARG > 9
@@ -538,16 +387,8 @@ RETURNF 畝尺寸
 	ENDIF
 	;妖精之友加成
 	LOCAL += Add_Apply_Fairy_Title_Bonus("gardening")
-	;天赋：丰收（熟期收获额外1~3个）/ 双收（10%概率翻倍，可叠加，由子系统开关控制）
-	SIF 生活系统_种地 && TALENT:MASTER:丰收 && PLANT_GROW:ARG >= 10
-		LOCAL += 1 + RAND:3
-	SIF 生活系统_种地 && TALENT:MASTER:双收 && !RAND:10
-		LOCAL *= 2
 	PRINTFORML 收获了{LOCAL}个%ARGS%
 	ITEM:(苗対応作物番号取得(PLANT_TYPE:ARG)) += LOCAL
-	;生活系统大修：耕种经验（收获时获得 = 收获个数 × 植株等级；未登记等级如跳蛋苗等保底1点，由子系统开关控制）
-	SIF 生活系统_种地
-		EXP:MASTER:耕种経験 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
 	PLANT_TYPE:ARG = 0
 	PLANT_DAYS:ARG = 0
 	PLANT_GROW:ARG = 0

@@ -1,4 +1,4 @@
-﻿@GETINFO_DLC(ARG)
+@GETINFO_DLC(ARG)
 #DIM Value
 CALL RELINE(6)
 SELECTCASE ARG
@@ -209,7 +209,7 @@ SELECTCASE ARG
 		CALL IFOn(BATTLEDLC,"弹幕战强化")
 	CASE 13
 		PRINTFORML 新妻泛用化补丁介绍
-		PRINTFORML 浴室play状态可同时进行新妻play状态
+		PRINTFORML 先开启新妻play后，可再开启浴室play、野外play或羞耻play与之共存
 		PRINTFORML 拥有爱欲的角色也可新妻play了
 
 		CALL IFOn(NEWWIFE,"新妻泛用化")
@@ -1030,14 +1030,15 @@ SELECTCASE ARG
 	CASE 65
 		PRINTL 搬家愿望
 		PRINTL 
-		PRINTL 允许满足一定条件的少女搬至自机家里，在祈愿中可以进行对象选择
-		PRINTL 相较于原版机制更加适合想要和少女过来同居的玩家
+		PRINTL 允许满足一定条件的少女在同地图或跨地图搬迁，在祈愿中可以进行对象选择
+		PRINTL 支持多人同室、跟随自机搬家，以及自定义房间名称
 		PRINTL 目前暂时没有兼容大别墅与大地图的补丁，可能有BUG！发现请立刻反馈！
 		CALL IFOn(MovingHomeWish, "搬家愿望")
 	CASE 66
 		PRINTFORML 实用设置开关
-		PRINTFORML 开启后，允许在游戏内进行一些额外设置
-		PRINTFORML 包括五重绝顶魔法
+		PRINTFORML 开启后，可在游戏内统一管理额外功能与便利性选项。
+		PRINTFORML 包括行为与交互调整、地图与后宫管理、快速施法、更多换装信息与批量切换等。
+		PRINTFORML 关闭实用设置时，其子功能开关也会一并关闭。
 		PRINTFORML
 		CALL IFOn(实用设置开关, "实用设置")
 		IF !实用设置开关
@@ -1052,56 +1053,31 @@ SELECTCASE ARG
 		CALL IFOn(妄想自慰补丁, "妄想自慰")
 	CASE 68
 		PRINTFORML 背景图片补丁开关
-		PRINTFORML 开启后，允许在游戏内展示背景图片, 需要先在[背景图片设置]中设置开启
+		PRINTFORM 开启后，允许在游戏内展示背景图片。除了可以在此处进行详细设定外，还可以在游戏内
+		SETCOLOR C_AQUA
+		PRINTFORM [背景图片设置]
+		RESETCOLOR
+		PRINTFORML 中进行设置（Ex_COM那一行）
 		PRINTFORML
-		CALL IFOn(背景图补丁开关, "背景图片")
+		IF !SPRITECREATED("通用浴室_0_0") ;第一个索引，也可以更换为其他版本标志索引
+			SETCOLOR C_RED
+			PRINTFORML ※※未检测到背景图片资源，将无法展示背景图片※※
+			RESETCOLOR
+			PRINTFORML 背景图资源包现已分包发布，请下载后按照说明将resources文件夹放到游戏主目录下；警告消失代表成功导入。
+			PRINTFORML 你可以前往"https://gitgud.io/dominare/eratw-sub-modding-BGI_Resource"
+			PRINTFORML 或"https://github.com/Paradox-Phenomenon/eratw-sub-modding-BGI_Resource"下载资源文件
+			PRINTFORMW 下载后, 请解压并置入游戏主目录下的"resources/背景图"文件夹内
+		ENDIF
+		CALL IFOn(背景图补丁开关, "背景图片补丁")
+		IF 背景图补丁开关
+			背景展示开关 = 1
+			CALL BACKGROUND_SETTING
+		ELSE
+			背景展示开关 = 0
+		ENDIF
 	CASE 69
-		;生活系统大修 - 主菜单（养鸡/种地/酿酒/钓鱼，各子系统独立启停）
-		Value = LINECOUNT
-		$LIFE_MENU
-		PRINTFORML 生活系统大修 · 主菜单
-		PRINTFORML 对养鸡/种地/酿酒/钓鱼生活玩法的强化，各子系统独立启停
-		PRINTL
-		SIF 生活系统_养鸡
-			SETCOLOR 0x00FF00
-		PRINTFORML [1] 养鸡系统　　\@ 生活系统_养鸡 ? [已生效] # [未启动] \@
-		RESETCOLOR
-		SIF 生活系统_种地
-			SETCOLOR 0x00FF00
-		PRINTFORML [2] 种地系统　　\@ 生活系统_种地 ? [已生效] # [未启动] \@
-		RESETCOLOR
-		SIF 生活系统_酿酒
-			SETCOLOR 0x00FF00
-		PRINTFORML [3] 酿酒系统　　\@ 生活系统_酿酒 ? [已生效] # [未启动] \@
-		RESETCOLOR
-		SIF 生活系统_钓鱼
-			SETCOLOR 0x00FF00
-		PRINTFORML [4] 钓鱼系统　　\@ 生活系统_钓鱼 ? [已生效] # [未启动] \@
-		RESETCOLOR
-		PRINTL
-		PRINTFORML ※ 咸鸭蛋产业链（鸭蛋→调合→腌制→咸鸭蛋）需要「养鸡系统」与「酿酒系统」同时开启
-		PRINTL
-		PRINTFORML [0] 一键关闭所有子系统　[99] 返回
-		INPUT
-		SELECTCASE RESULT
-			CASE 0
-				;一键关闭所有子系统
-				生活系统_养鸡 = 0
-				生活系统_种地 = 0
-				生活系统_酿酒 = 0
-				生活系统_钓鱼 = 0
-				PRINTFORMW 已关闭所有生活系统子系统
-				RESTART
-			CASE 1 TO 4
-				CALL 生活系统_子系统菜单(RESULT)
-				CLEARLINE LINECOUNT - Value
-				GOTO LIFE_MENU
-			CASE 99
-				RETURN
-			CASEELSE
-				CLEARLINE LINECOUNT - Value
-				GOTO LIFE_MENU
-		ENDSELECT
+		;生活系统大修：主菜单（实现位于 DLC/生活系统大修/生活系统_菜单.ERB）
+		CALL 生活系统_主菜单
 	CASEELSE
 		PRINTFORMW 无效输入
 ENDSELECT
@@ -1391,89 +1367,4 @@ SELECTCASE RESULT
 		PRINTL 设置完成
 	CASEELSE
 		PRINTFORMW 无效输入
-ENDSELECT
-
-;--------------------------------------------------------
-;生活系统大修 - 子系统设置子菜单
-;ARG: 1=养鸡 2=种地 3=酿酒 4=钓鱼
-;--------------------------------------------------------
-@生活系统_子系统菜单(ARG)
-#LOCALSIZE 2
-#LOCALSSIZE 2
-;LOCAL:1 = 进入时行数（用于 CLEARLINE）
-LOCAL:1 = LINECOUNT
-SELECTCASE ARG
-	CASE 1
-		LOCAL = 生活系统_养鸡
-		LOCALS = 养鸡系统
-		LOCALS:1 = 强化鸡舍养殖玩法：收蛋、饲料、亲密度、孵化器、自动抚摸机等。※ 咸鸭蛋产业链（鸭蛋→调合→腌制）需要与「酿酒系统」同时开启
-	CASE 2
-		LOCAL = 生活系统_种地
-		LOCALS = 种地系统
-		LOCALS:1 = 新增「育苗」指令：在菜园旁消耗采集素材育成种子，种子可在家庭菜园种植。越是珍贵的作物收成越稀少，成熟期的收成格外丰厚；浆果与菌菇类收获后还能再收一茬
-	CASE 3
-		LOCAL = 生活系统_酿酒
-		LOCALS = 酿酒系统
-		LOCALS:1 = 酿酒玩法扩展：橡木酒桶（酒桶0=原版酒虫，酒桶1～5由家具屋打造，每个独立酿酒）。※ 咸鸭蛋腌制（清酒中添加待腌制的咸鸭蛋）需要与「养鸡系统」同时开启
-	CASE 4
-		LOCAL = 生活系统_钓鱼
-		LOCALS = 钓鱼系统
-		LOCALS:1 = 以钓鱼小游戏取代原本的钓鱼判定：浮漂下沉时提竿，拉锯战中选对方向与鱼角力，在它挣脱之前拉上来
-	CASEELSE
-		RETURN
-ENDSELECT
-$LIFE_SUB_MENU
-PRINTFORML 【%LOCALS%】　\@ LOCAL ? [已生效] # [未启动] \@
-PRINTFORML %LOCALS:1%
-SIF ARG == 2
-	PRINTFORML 提示：先去图书馆寻找一下耕种的基础教程再开始尝试种地会比较好
-PRINTL
-PRINTFORML [0] \@ LOCAL ? 关闭本子系统 # 启动本子系统 \@
-SIF ARG == 4
-	PRINTFORML [2] 难度：\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
-SIF ARG == 4
-	PRINTFORML [3] 钓鱼小游戏玩法说明
-PRINTFORML [9] 返回主菜单
-INPUT
-SELECTCASE RESULT
-	CASE 0
-		SELECTCASE ARG
-			CASE 1
-				生活系统_养鸡 = !生活系统_养鸡
-			CASE 2
-				生活系统_种地 = !生活系统_种地
-			CASE 3
-				生活系统_酿酒 = !生活系统_酿酒
-			CASE 4
-				生活系统_钓鱼 = !生活系统_钓鱼
-		ENDSELECT
-		LOCAL = !LOCAL
-		PRINTFORMW %LOCALS%已\@ LOCAL ? 启动 # 关闭 \@
-		CLEARLINE LINECOUNT - LOCAL:1
-		GOTO LIFE_SUB_MENU
-	CASE 2
-		;难度切换（仅钓鱼）
-		IF ARG == 4
-			生活系统_钓鱼_难度 = !生活系统_钓鱼_难度
-			PRINTFORMW 钓鱼小游戏难度已切换为\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
-		ENDIF
-		CLEARLINE LINECOUNT - LOCAL:1
-		GOTO LIFE_SUB_MENU
-	CASE 3
-		;玩法说明（仅钓鱼）
-		IF ARG == 4
-			PRINTL 钓鱼小游戏玩法说明
-			PRINTL 提竿：浮漂下沉后需在倒计时内按[0]提竿，超时脱钩
-			PRINTL 拉锯：鱼会向四个方向之一逃窜，选择与其相反的方向拉竿
-			PRINTL 选对方向扣除鱼体力，选错则鱼恢复体力
-			PRINTL 在鱼挣脱之前耗尽它的体力即为成功
-			PRINTFORMW 钓鱼技艺越高反应时间越长，技艺精湛时正确方向会以黄色高亮
-		ENDIF
-		CLEARLINE LINECOUNT - LOCAL:1
-		GOTO LIFE_SUB_MENU
-	CASE 9
-		RETURN
-	CASEELSE
-		CLEARLINE LINECOUNT - LOCAL:1
-		GOTO LIFE_SUB_MENU
 ENDSELECT
