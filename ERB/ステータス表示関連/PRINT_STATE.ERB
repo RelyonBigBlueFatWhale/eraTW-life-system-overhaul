@@ -378,7 +378,7 @@ IF !TFLAG:経験表示
 			LOCAL:5 = CALC_ABL_DEMAND(58, EXPLV:(LOCAL:3 + 3 - LOCAL:4))
 			LOCAL:6 = 0
 			SIF LOCAL:5 > 0
-				LOCAL:6 = EXP:選択中角色ID:139 * 5 / LOCAL:5
+				LOCAL:6 = MIN(5, EXP:選択中角色ID:139 * 5 / LOCAL:5)
 			LOCAL:7 = 5 - LOCAL:6
 			PRINTFORM （{EXP:選択中角色ID:139}/{LOCAL:5}）【%"■" * LOCAL:6%%"□" * LOCAL:7%】
 		ENDIF
