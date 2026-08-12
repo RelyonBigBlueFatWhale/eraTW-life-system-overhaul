@@ -157,8 +157,8 @@ ELSEIF 行動番号 == 1
 		行動コスト += 5
 	ENDIF
 ELSEIF 行動番号 == 2
-	;収穫処理を関数化
-	行動コスト = HERVEST(ARG, LOCALS)
+	;収穫処理を関数化（生活系统大修：调用含经验/天赋的收获函数）
+	行動コスト = 生活系统_HERVEST(ARG, LOCALS)
 
 ;全収穫追加
 ELSEIF 行動番号 == 6
@@ -166,7 +166,7 @@ ELSEIF 行動番号 == 6
 	畝尺寸 = 生活系统_畝数()
 	FOR LOCAL,0,畝尺寸
 		LOCALS = %HATAKE_NAME:LOCAL%
-		行動コスト += HERVEST(LOCAL, LOCALS)
+		行動コスト += 生活系统_HERVEST(LOCAL, LOCALS)
 	NEXT
 ELSEIF 行動番号 == 3
 	IF PLANT_DRY:ARG <= 4 && PLANT_GROW:ARG <= 10
