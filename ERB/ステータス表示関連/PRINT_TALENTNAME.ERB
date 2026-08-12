@@ -145,6 +145,22 @@ SELECTCASE ARG
 		FOR CNT , 1 , C_ABILITY_MAX:ARG + 1
 			L_TNAME += @"%ARG_SW%%TALENT_TR(ARG)%{CNT}"
 		NEXT
+	;催熟（生活系统大修：耕种天赋，0/1二值）
+	CASE 63
+		L_TVALUE = 0%ARG_SW%1
+		L_TNAME = %ARG_SW%%TALENT_TR(ARG)%
+	;丰收（生活系统大修：耕种天赋，0/1二值）
+	CASE 64
+		L_TVALUE = 0%ARG_SW%1
+		L_TNAME = %ARG_SW%%TALENT_TR(ARG)%
+	;沃土（生活系统大修：耕种天赋，0/1二值）
+	CASE 65
+		L_TVALUE = 0%ARG_SW%1
+		L_TNAME = %ARG_SW%%TALENT_TR(ARG)%
+	;双收（生活系统大修：耕种天赋，0/1二值）
+	CASE 66
+		L_TVALUE = 0%ARG_SW%1
+		L_TNAME = %ARG_SW%%TALENT_TR(ARG)%
 	;污臭耐性
 	CASE 61
 		L_TVALUE = -2%ARG_SW%-1%ARG_SW%0%ARG_SW%1%ARG_SW%2
