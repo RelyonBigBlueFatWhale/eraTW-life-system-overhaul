@@ -1,0 +1,510 @@
+﻿;========================================================
+; 生活系统大修 - 钓鱼系统：钓鱼小游戏
+; 文件：ERB/DLC/生活系统大修/生活系统_钓鱼.ERB
+;
+; 主入口：@生活系统_钓鱼_小游戏(釣魚パワーM, CHARA, nWaggyBonus)
+;   由 COMF621 在「生活系统_钓鱼」开关开启时调用
+;   通过 RESULT 返回：鱼种编号 / 610木材 / 131纸片 / 706青蛙 / 21跳蛋 / 0=没钓到
+;
+; 内部函数：已全部内联到 @生活系统_钓鱼_小游戏 中（避免 Emuera
+;   用户函数参数传递问题）。仅保留每日事件钩子 @生活系统_钓鱼_每日事件
+;
+; 显示策略：界面一次性绘制，轮询只刷新底部倒计时行（CLEARLINE 2 清除
+;   倒计时行+TINPUT输入行，避免屏幕滚动）；拉锯战全部内联（不使用
+;   CALL/参数传递/RESULT回传HP），消除传递导致的判定异常
+;========================================================
+
+;--------------------------------------------------------
+; 钓鱼小游戏主入口
+;--------------------------------------------------------
+@生活系统_钓鱼_小游戏(釣魚パワーM, CHARA, nWaggyBonus)
+#LOCALSIZE 4
+#LOCALSSIZE 6
+#DIM DYNAMIC 釣魚パワーM
+#DIM DYNAMIC CHARA
+#DIM DYNAMIC nWaggyBonus
+#DIM DYNAMIC 制限時間
+#DIM DYNAMIC 钓果等级
+#DIM DYNAMIC 鱼HP
+#DIM DYNAMIC 正解
+#DIM DYNAMIC 正确方向
+#DIM DYNAMIC 伤害
+#DIM DYNAMIC 恢复
+#DIM DYNAMIC 拉锯回合数
+#DIM DYNAMIC 当前HP
+#DIM DYNAMIC startTime
+#DIM DYNAMIC elapsed
+#DIM DYNAMIC remaining
+#DIM DYNAMIC barFilled
+
+;COMF621への戻り値：TFLAG:100経由で伝達（CALL/RETURNのRESULT伝達問題回避）
+TFLAG:100 = 0
+
+;方向文本（拉锯战按钮用）
+LOCALS:0 = ↑
+LOCALS:1 = ↓
+LOCALS:2 = ←
+LOCALS:3 = →
+;进度条字符（各20格）
+LOCALS:4 = ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇
+LOCALS:5 = ▢▢▢▢▢▢▢▢▢▢▢▢▢▢▢▢▢▢▢▢
+
+;===== 阶段一：提竿 =====
+
+;计算反应时间窗口（ms）
+制限時間 = 2500 + TALENT:MASTER:釣りLv * 300
+SIF CHARA
+	制限時間 += 500
+;难度修正：默认难度倒计时减半
+SIF !生活系统_钓鱼_难度
+	制限時間 /= 2
+
+;一次性绘制咬钩提示（轮询只刷新倒计时行）
+CALL RELINE(6)
+PRINTFORML ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRINTFORML    浮漂猛地沉入水中！
+PRINTBUTTON @"[0] 提竿！", 0
+PRINTL
+
+GETMILLISECOND
+LOCAL:1 = RESULT:0
+
+$HOOK_TIMER_LOOP
+GETMILLISECOND
+LOCAL:0 = RESULT:0 - LOCAL:1
+SIF LOCAL:0 >= 制限時間
+	GOTO HOOK_TIMEOUT
+LOCAL:2 = 制限時間 - LOCAL:0
+
+PRINTFORML    倒计时 {LOCAL:2/1000}.{LOCAL:2%1000/100} 秒
+TINPUT 20, -1, 0, ""
+IF RESULT == 0
+	CLEARLINE 2
+	GOTO HOOK_SUCCESS
+ENDIF
+CLEARLINE 2
+GOTO HOOK_TIMER_LOOP
+
+$HOOK_TIMEOUT
+CLEARLINE 2
+PRINTFORML 鱼脱钩了……
+RESULT = 0
+RETURN
+
+;===== 阶段二：判定钓物 =====
+$HOOK_SUCCESS
+
+;钓鱼力为负（极端天气+运势差）时即使提竿成功也无法钓到
+IF 釣魚パワーM <= 0
+	PRINTFORML 鱼咬钩了，但挣扎了一下就脱钩了……
+	RESULT = 0
+	RETURN
+ENDIF
+
+;沿用原作分布判定钓上了什么（RAND:釣魚パワー = 0～釣魚パワー-1）
+LOCAL:0 = RAND:釣魚パワーM
+IF LOCAL:0 < 5
+	;木材
+	RESULT = 610
+	TFLAG:100 = RESULT
+	RETURN
+ELSEIF LOCAL:0 < 10
+	;守矢之守札
+	RESULT = 131
+	TFLAG:100 = RESULT
+	RETURN
+ELSEIF LOCAL:0 >= 10 && LOCAL:0 <= 50
+	;普通鱼（档位20~50；原作此处50会映射到60，但FISHING_CATCH无60档，修正为70）
+	LOCAL:0 = ((LOCAL:0 + 10) / 10) * 10
+	IF LOCAL:0 == 60
+		LOCAL:0 = 70
+	ENDIF
+	钓果等级 = LOCAL:0
+ELSEIF LOCAL:0 >= 51 && LOCAL:0 <= 60
+	;青蛙 — 算杂物，直接获得
+	RESULT = 706
+	TFLAG:100 = RESULT
+	RETURN
+ELSEIF LOCAL:0 >= 61 && LOCAL:0 <= 89
+	;普通鱼（档位70~90）
+	LOCAL:0 = ((LOCAL:0 + 10) / 10) * 10
+	钓果等级 = LOCAL:0
+ELSEIF LOCAL:0 < 95
+	;稀有鱼（泷太郎/腔棘鱼等）
+	钓果等级 = 95
+ELSE
+	;传说（龙涎香/龙之爪/冰之鳞等）
+	钓果等级 = 100
+ENDIF
+
+;===== 阶段三：拉锯战准备 =====
+
+;查鱼HP
+SELECTCASE 钓果等级
+	CASE 20
+		鱼HP = 55
+	CASE 30, 40, 50
+		鱼HP = 80
+	CASE 70
+		鱼HP = 120
+	CASE 80, 90
+		鱼HP = 165
+	CASE 95, 100
+		鱼HP = 210
+	CASEELSE
+		鱼HP = 80
+ENDSELECT
+;查错误时鱼恢复量
+SELECTCASE 钓果等级
+	CASE 20
+		恢复 = 5
+	CASE 30, 40, 50
+		恢复 = 8
+	CASE 70
+		恢复 = 11
+	CASE 80, 90
+		恢复 = 14
+	CASE 95, 100
+		恢复 = 17
+	CASEELSE
+		恢复 = 8
+ENDSELECT
+
+;伤害公式
+伤害 = 30 + TALENT:MASTER:釣りLv * 6
+SIF CHARA
+	伤害 += TALENT:CHARA:釣りLv * 3
+伤害 += MAX(-2, MIN(2, CFLAG:MASTER:今日の運勢 / 20))
+
+;鱼种体型描述
+SELECTCASE 钓果等级
+	CASE 20
+		LOCALS:0 = 一条小鱼
+	CASE 30, 40, 50
+		LOCALS:0 = 一条体型不错的鱼
+	CASE 70
+		LOCALS:0 = 一条大块头的鱼
+	CASE 80, 90
+		LOCALS:0 = 一条巨大的鱼
+	CASE 95, 100
+		LOCALS:0 = 水面下隐约有庞然大物在游动……
+	CASEELSE
+		LOCALS:0 = 一条鱼
+ENDSELECT
+
+PRINTFORML %LOCALS:0%上钩了！开始和它较劲……
+WAIT
+
+;恢复方向文本（体型描述覆盖了LOCALS:0）
+LOCALS:0 = ↑
+LOCALS:1 = ↓
+LOCALS:2 = ←
+LOCALS:3 = →
+
+;===== 阶段四：拉锯战（全部内联，GOTO 回合循环） =====
+
+当前HP = 鱼HP
+拉锯回合数 = 0
+
+$NEXT_ROUND
+SIF 拉锯回合数 >= 8
+	GOTO FISH_ESCAPED
+
+;鱼选择逃窜方向
+正解 = RAND:4
+正确方向 = 正解 ^ 1
+
+;---- 一次性绘制回合界面 ----
+PRINTFORML ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+barFilled = 当前HP * 20 / MAX(鱼HP, 1)
+PRINTFORM 鱼体力 %SUBSTRING(LOCALS:4, 0, barFilled)%%SUBSTRING(LOCALS:5, 0, MAX(0, 20 - barFilled))%
+PRINTFORML  {当前HP}/{鱼HP}
+PRINTFORML 鱼猛地向 %LOCALS:(正解)% 游去！
+LOCAL:0 = -1
+$BTN_LOOP
+LOCAL:0 += 1
+SIF LOCAL:0 >= 4
+	GOTO BTN_DONE
+IF TALENT:MASTER:釣りLv >= 5 && LOCAL:0 == 正确方向
+	SETCOLOR C_YELLOW
+ENDIF
+PRINTBUTTON @"[{LOCAL:0}] %LOCALS:(LOCAL:0)%", LOCAL:0
+RESETCOLOR
+PRINTL
+GOTO BTN_LOOP
+$BTN_DONE
+PRINTFORML 第{拉锯回合数+1}回合
+
+;---- 倒计时轮询（只刷新底部倒计时行） ----
+;轮询计数保险（防止GETMILLISECOND异常导致永不超时）
+LOCAL:2 = 0
+;难度修正：默认难度方向选择时限减半
+LOCAL:3 = 4500
+SIF !生活系统_钓鱼_难度
+	LOCAL:3 /= 2
+GETMILLISECOND
+startTime = RESULT:0
+
+$BATTLE_POLL
+;轮询次数保险：约300次轮询（约6秒）后强制按超时处理
+LOCAL:2 += 1
+SIF LOCAL:2 >= LOCAL:3 / 15
+	GOTO BATTLE_TIMEOUT
+GETMILLISECOND
+elapsed = RESULT:0 - startTime
+SIF elapsed >= LOCAL:3
+	GOTO BATTLE_TIMEOUT
+remaining = LOCAL:3 - elapsed
+
+PRINTFORML 剩余 {remaining/1000}.{remaining%1000/100} 秒
+TINPUT 20, -1, 0, ""
+IF INRANGE(RESULT, 0, 3)
+	;有效输入 — 判定
+	CLEARLINE 2
+	IF RESULT == 正确方向
+		;正确！
+		当前HP -= 伤害
+		PRINTFORML 拉住了鱼！鱼被拽得晕头转向
+		PRINTFORMW 当前鱼体力：{MAX(0, 当前HP)}/{鱼HP}
+		DEBUGPRINTFORML [钓鱼调试]回合{拉锯回合数} 选对 伤害{伤害} HP={当前HP}
+	ELSE
+		;错误
+		当前HP += 恢复
+		SIF 当前HP > 鱼HP
+			当前HP = 鱼HP
+		PRINTFORML 方向错误！鱼趁机恢复了体力
+		PRINTFORMW 当前鱼体力：{当前HP}/{鱼HP}
+		DEBUGPRINTFORML [钓鱼调试]回合{拉锯回合数} 选错 恢复{恢复} HP={当前HP}
+	ENDIF
+	DEBUGPRINTFORML [钓鱼调试]判定后 HP={当前HP} 回合={拉锯回合数}
+	SIF 当前HP <= 0
+		GOTO FISH_CAUGHT
+	拉锯回合数 += 1
+	GOTO NEXT_ROUND
+ENDIF
+
+;无输入 — 清除倒计时行+输入行，继续轮询
+CLEARLINE 2
+GOTO BATTLE_POLL
+
+;倒计时耗尽 — 视同选错
+$BATTLE_TIMEOUT
+DEBUGPRINTFORML [钓鱼调试]BATTLE_TIMEOUT 回合={拉锯回合数} HP={当前HP}
+CLEARLINE 2
+PRINTFORML 来不及反应！鱼挣脱了一些……
+当前HP += 恢复
+SIF 当前HP > 鱼HP
+	当前HP = 鱼HP
+PRINTFORMW 当前鱼体力：{当前HP}/{鱼HP}
+SIF 当前HP <= 0
+	GOTO FISH_CAUGHT
+拉锯回合数 += 1
+GOTO NEXT_ROUND
+
+;8回合未归零 — 失败
+$FISH_ESCAPED
+DEBUGPRINTFORML [钓鱼调试]FISH_ESCAPED 回合={拉锯回合数} HP={当前HP}
+PRINTFORML 鱼挣脱了鱼线游走了……
+WAIT
+RESULT = 0
+RETURN
+
+;拉上来了 — 成功
+$FISH_CAUGHT
+DEBUGPRINTFORML [钓鱼调试]FISH_CAUGHT 回合={拉锯回合数} HP={当前HP}
+PRINTFORML 鱼被拉上来了！
+;出鱼 SELECTCASE 先于 WAIT 执行，用 LOCAL:0 暂存结果以防 WAIT 覆写 RESULT
+SELECTCASE 钓果等级
+	CASE 20
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1, 4
+				RESULT = 5	;拉氏鱥
+			CASE 2, 7, 8
+				RESULT = 6	;溪哥
+			CASE 3, 5, 6
+				RESULT = 1	;石斑魚
+			CASE 9
+				RESULT = 33	;幽影鳞鱼
+			CASEELSE
+				RESULT = 5	;兜底：拉氏鱥
+		ENDSELECT
+	CASE 30
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1, 2, 6
+				RESULT = 7	;鲫魚
+			CASE 3, 5
+				RESULT = 2	;皐月鳟
+			CASE 4
+				RESULT = 706	;青蛙（大蛤蟆之池特色）
+			CASE 7, 8
+				RESULT = 8	;食人魚
+			CASE 9
+				RESULT = 34	;火舌鲤
+			CASEELSE
+				RESULT = 7	;兜底：鲫鱼
+		ENDSELECT
+	CASE 40
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1, 2, 6
+				RESULT = 16	;杜父魚
+			CASE 3, 5
+				RESULT = 3	;山女魚
+			CASE 4, 8
+				RESULT = 706	;青蛙
+			CASE 7
+				RESULT = 9	;雀鳝
+			CASE 9
+				RESULT = 35	;斗鲈
+			CASEELSE
+				RESULT = 16	;兜底：杜父鱼
+		ENDSELECT
+	CASE 50
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1, 6
+				RESULT = 10	;蓝鳃太阳魚
+			CASE 2, 7, 8
+				IF DAY:2 < 3
+					RESULT = 17	;香魚（春夏）
+				ELSE
+					RESULT = 6	;溪哥（秋冬）
+				ENDIF
+			CASE 3, 5
+				RESULT = 4	;岩魚
+			CASE 4
+				RESULT = 706	;青蛙
+			CASE 9
+				RESULT = 36	;影毒鳐
+			CASEELSE
+				RESULT = 10	;兜底：蓝鳃太阳鱼
+		ENDSELECT
+	CASE 70
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1, 4, 6
+				IF DAY:2 == 4
+					RESULT = 12	;西太公魚（冬）
+				ELSE
+					RESULT = 18	;鲶魚
+				ENDIF
+			CASE 2, 7, 8
+				RESULT = 19	;鰻魚
+			CASE 3, 5
+				IF DAY:2 == 3
+					RESULT = 11	;鮭魚（秋）
+				ELSEIF DAY:2 == 4
+					RESULT = 12	;西太公魚（冬）
+				ELSE
+					RESULT = 13	;虹鳟
+				ENDIF
+			CASE 9
+				RESULT = 37	;星光鲦
+			CASEELSE
+				RESULT = 18	;兜底：鲶鱼
+		ENDSELECT
+	CASE 80
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1
+				RESULT = 20	;姫鳟
+			CASE 2, 4, 6, 8
+				RESULT = 22	;鲤鱼
+			CASE 3, 5
+				RESULT = 14	;八目鰻
+			CASE 7
+				RESULT = 24	;鲟
+			CASE 9
+				RESULT = 38	;铁甲鱼
+			CASEELSE
+				RESULT = 22	;兜底：鲤鱼
+		ENDSELECT
+	CASE 90
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1
+				RESULT = 25	;国鳟
+			CASE 2
+				RESULT = 26	;草鱼
+			CASE 3
+				RESULT = 15	;雷魚
+			CASE 4
+				RESULT = 27	;高身鲫
+			CASE 5
+				RESULT = 28	;伊富鱼
+			CASE 6
+				RESULT = 29	;大口黑鲈
+			CASE 7
+				RESULT = 30	;巨骨舌鱼
+			CASE 8
+				RESULT = 32	;青鱼
+			CASE 9
+				RESULT = 39	;幻斑石斑
+			CASEELSE
+				RESULT = 29	;兜底：大口黑鲈
+		ENDSELECT
+	CASE 95
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1
+				IF MOON_WATCH(DAY:3) == 1
+					RESULT = 31	;泷太郎（新月）
+				ELSE
+					RESULT = 23	;腔棘鱼
+				ENDIF
+			CASE 2
+				RESULT = 23	;腔棘鱼
+			CASE 3
+				RESULT = 11	;鲑鱼
+			CASE 4
+				RESULT = 27	;高身鲫
+			CASE 5
+				RESULT = 28	;伊富鱼
+			CASE 6
+				RESULT = 29	;大口黑鲈
+			CASE 7
+				RESULT = 30	;巨骨舌鱼
+			CASE 8
+				RESULT = 32	;青鱼
+			CASE 9
+				RESULT = 40	;[已编辑]
+			CASEELSE
+				RESULT = 23	;兜底：腔棘鱼
+		ENDSELECT
+	CASE 100
+		SELECTCASE FISHING_SPOT(CFLAG:MASTER:現在位置)
+			CASE 1, 3, 5, 6
+				RESULT = 31	;泷太郎
+			CASE 2, 4, 7, 8
+				RESULT = 23	;腔棘鱼
+			CASE 9
+				RESULT = 40	;[已编辑]
+			CASEELSE
+				RESULT = 31	;兜底：泷太郎
+		ENDSELECT
+	CASEELSE
+		RESULT = 7	;兜底：鲫鱼
+ENDSELECT
+TFLAG:100 = RESULT
+LOCAL:0 = RESULT
+;直接加道具到背包（不依赖COMF621的GOTO FISHING_RESULT流程）
+SELECTCASE RESULT
+	CASE 1 TO 10, 22 TO 23
+		CALL GET_ITEM("魚", 1, 1)
+	CASE 11 TO 20, 24 TO 32, 37 TO 40
+		CALL GET_ITEM("好吃的魚", 1, 1)
+	CASE 21
+		CALL GET_ITEM("跳蛋", 1, 1)
+	CASEELSE
+		SIF ITEM:RESULT < 99
+			ITEM:RESULT ++
+ENDSELECT
+WAIT
+RESULT = LOCAL:0
+RETURN
+
+;========================================================
+; 每日事件钩子（占位，由 DLCEVENT 调用）
+;========================================================
+@生活系统_钓鱼_每日事件
+#LOCALSIZE 1
+#LOCALSSIZE 1
+SIF !生活系统_钓鱼
+	RETURN
+;TODO: 实装钓鱼系统的每日结算逻辑
+RETURN
+

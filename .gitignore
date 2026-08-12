@@ -1,0 +1,7 @@
+# 忽略打包产物（用 GitHub Releases 发布 zip）
+*.zip
+
+# 系统/编辑器临时文件
+*.log
+.DS_Store
+Thumbs.db

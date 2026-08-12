@@ -1,0 +1,98 @@
+﻿;-------------------------------------------------
+;开荒
+;日常系指令、レベル1
+;生活系统大修 - 种地系统
+;在家庭菜园开垦新耕地（荒地），消耗大量时间/体力/气力
+;耕种Lv 每级减少 10% 消耗；菜园上限 8 块（隙间耕地 910 时 240）
+;-------------------------------------------------
+@COM472
+#LOCALSIZE 3
+#LOCALSSIZE 1
+
+;当前畝数与上限
+LOCAL = GETUNELENGTH418()
+LOCAL:1 = 生活系统_畝上限()
+LOCAL:2 = LOCAL:1 - LOCAL    ;剩余可开垦数
+PRINTFORML 当前可耕土地：{LOCAL}/{LOCAL:1}块
+IF LOCAL:2 <= 0
+	PRINTFORML 可以使用的地皮已经都开荒完毕了……
+	RETURN 1
+ENDIF
+;每日限一次：当天已开垦过则拒绝（连续开荒会消耗过多时间与体力）
+IF 生活系统_开荒日期 == DAY:0
+	PRINTFORML 今天已经很累了，没有心力再开拓耕地了……
+	RETURN 1
+ENDIF
+;消耗计算（基础：时间900分钟、体力2000、气力2000；耕种Lv每级-10%）
+;注：时间上限到午夜为止——若跨日推进会触发清晨结算（延迟的调合/料理等DOWNBASE消耗一并入账），
+;造成"开荒多扣了体力气力"的错觉，故用 SIF TIME > 1440 截断
+LOCAL:0 = 100 - TALENT:MASTER:耕种Lv * 10
+IF BASE:MASTER:体力 < 2000 * LOCAL:0 / 100 || BASE:MASTER:気力 < 2000 * LOCAL:0 / 100
+	PRINTFORML 体力与气力不足以开垦荒地……
+	RETURN 1
+ENDIF
+;体力低于500会触发"体力濒临极限"强制跳过当日，开荒前预留底线
+IF BASE:MASTER:体力 - 2000 * LOCAL:0 / 100 <= 500
+	PRINTFORML 开垦后体力会跌破极限而直接昏倒，还是先休息一下吧……
+	RETURN 1
+ENDIF
+PRINTFORML 开垦一片荒地需要约900分钟（15小时，时间不足时到午夜为止），消耗体力{2000 * LOCAL:0 / 100}、气力{2000 * LOCAL:0 / 100}
+PRINTFORML 开垦后剩余可开垦土地：{LOCAL:2 - 1}块
+CALL ASK_YN
+;ASK_YN：[0]是 [1]否 → RESULT 0=是 1=否
+IF RESULT
+	RETURN 1
+ENDIF
+;执行
+生活系统_开荒日期 = DAY:0    ;记录当日已开荒（每日限一次）
+生活系统_开荒数 ++
+EXP:MASTER:耕种経験 += 2
+PRINTFORML 挥动锄头，开垦出了一片新的耕地！
+PRINTFORML 现在共有{GETUNELENGTH418()}块可耕种土地（上限{LOCAL:1}块）
+;消耗（时停折抵 TSP）
+IF FLAG:70 == 0
+	TIME += 900
+	;不超过午夜，避免跨日触发清晨结算（延迟DOWNBASE消耗入账/睡眠处理）
+	SIF TIME > 1440
+		TIME = 1440
+ELSE
+	BASE:MASTER:TSP -= 900 * 3
+ENDIF
+BASE:MASTER:体力 -= 2000 * LOCAL:0 / 100
+BASE:MASTER:気力 -= 2000 * LOCAL:0 / 100
+RETURN 1
+
+;-------------------------------------------------
+;実行判定
+;-------------------------------------------------
+@COM_ABLE472
+#LOCALSIZE 1
+#LOCALSSIZE 1
+;生活系统大修 - 种地系统开关
+SIF !生活系统_种地
+	RETURN 0
+;一括管理
+SIF GLOBAL_COMABLE(472)
+	RETURN RESULT
+;必须在可进行家庭菜园的场所
+SIF !家庭菜園可(CFLAG:MASTER:現在位置) && !IS_GAP_GUEST(MASTER)
+	RETURN 0
+;需要園芸用品一式
+SIF !ITEM:150
+	RETURN 0
+;已经开垦完毕
+SIF GETUNELENGTH418() >= 生活系统_畝上限()
+	RETURN 0
+;気力0
+SIF BASE:MASTER:気力 <= 0
+	RETURN 0
+SIF CFLAG:诶嘿嘿 == 2
+	RETURN 0
+RETURN 1
+
+@COM472_TAGS
+#LOCALSIZE 1
+#LOCALSSIZE 1
+#FUNCTION
+SETBIT LOCAL, BIT_家事コマンド
+RETURNF LOCAL

@@ -1,0 +1,616 @@
+﻿;-------------------------------------------------
+;育苗
+;日常系指令、レベル1
+;生活系统大修 - 种地系统
+;需要家具「育苗设施」（908，家具屋打造，1~3级）并放置于家庭菜园
+;流程：放入成材 → 等待（分钟制，槽位占用）→ 收获种子
+;设施等级：Lv1=1槽/100%时间 Lv2=2槽/90% Lv3=3槽/80%
+;-------------------------------------------------
+@COM471
+#LOCALSIZE 3
+#LOCALSSIZE 1
+
+;育苗设施必须
+SIF ITEM:908 < 1
+	RETURN -1
+
+$育苗_主菜单
+LOCAL:2 = LINECOUNT
+LOCAL:1 = ITEM:908    ;设施等级 1~3（槽位上限）
+PRINTFORML 【育苗设施】Lv{LOCAL:1}　槽位{已占用槽数()}/{LOCAL:1}　育苗时间{100 - (LOCAL:1 - 1) * 10}％
+;逐槽显示
+FOR LOCAL:0, 0, LOCAL:1
+	CALL 育苗_槽显示(LOCAL:0)
+NEXT
+PRINTL [0] 结束
+$育苗_输入
+INPUT
+DEBUGPRINTFORML [育苗调试]主菜单输入={RESULT} 等级={LOCAL:1}
+SELECTCASE RESULT
+	CASE 0
+		RETURN 1
+	CASE 1 TO 3
+		;槽号越界
+		IF RESULT > LOCAL:1
+			CLEARLINE 1
+			GOTO 育苗_输入
+		ENDIF
+		LOCAL:0 = RESULT - 1
+		LOCAL = LOCAL:0    ;槽号（单段下标，避免多维数组参数歧义）
+		DEBUGPRINTFORML [育苗调试]选中槽={LOCAL}
+		DEBUGPRINTFORML [育苗调试]槽材料={育苗槽:LOCAL:育苗槽_材料}
+		DEBUGPRINTFORML [育苗调试]经过={TIME:1 - 育苗槽:LOCAL:育苗槽_开始时刻}
+		DEBUGPRINTFORML [育苗调试]需求={育苗槽:LOCAL:育苗槽_需求分钟}
+		IF 育苗槽:LOCAL:育苗槽_材料 == 0
+			;空槽 → 放入
+			CALL 育苗_放入(LOCAL)
+			CALL 育苗_耗时
+		ELSEIF TIME:1 - 育苗槽:LOCAL:育苗槽_开始时刻 >= 育苗槽:LOCAL:育苗槽_需求分钟
+			;完成 → 收获
+			CALL 育苗_收获(LOCAL)
+			CALL 育苗_耗时
+		ELSE
+			PRINTFORML 还在育苗中，等完成后再来收获……
+		ENDIF
+		CLEARLINE LINECOUNT - LOCAL:2
+		GOTO 育苗_主菜单
+	CASEELSE
+		CLEARLINE 1
+		GOTO 育苗_输入
+ENDSELECT
+
+;-------------------------------------------------
+; 槽位状态显示
+;-------------------------------------------------
+@育苗_槽显示(ARG)
+#LOCALSIZE 4
+#LOCALSSIZE 1
+IF 育苗槽:ARG:育苗槽_材料 == 0
+	PRINTFORML [{ARG+1}] 空　－　放入育苗
+ELSE
+	LOCAL:3 = TIME:1 - 育苗槽:ARG:育苗槽_开始时刻    ;经过分钟（独立下标，避免被覆盖）
+	IF LOCAL:3 >= 育苗槽:ARG:育苗槽_需求分钟
+		SETCOLOR 0x00FF00
+		LOCAL:0 = 育苗槽:ARG:育苗槽_产物
+		PRINTFORML [{ARG+1}] %ITEMNAME_TR(LOCAL:0)% 育苗完成！可收获
+		RESETCOLOR
+	ELSE
+		LOCAL:0 = 育苗槽:ARG:育苗槽_材料
+		LOCAL:1 = 育苗槽:ARG:育苗槽_产物
+		LOCAL:2 = 育苗槽:ARG:育苗槽_需求分钟 - LOCAL:3    ;剩余分钟
+		PRINTFORM [{ARG+1}] %ITEMNAME_TR(LOCAL:0)%→%ITEMNAME_TR(LOCAL:1)% 育苗中　剩余
+		CALL 育苗_打印时间(LOCAL:2)
+		PRINTL
+	ENDIF
+ENDIF
+
+;-------------------------------------------------
+; 放入成材（选配方→扣材料→记槽）
+; ARG=槽号
+;-------------------------------------------------
+@育苗_放入(ARG)
+#LOCALSIZE 4
+#LOCALSSIZE 1
+;显示可育配方（含产量与所需时间）
+CALL 育苗_显示配方
+SELECTCASE RESULT
+	CASE -1
+		PRINTFORML 没有可以育苗的成材……
+		RETURN
+	CASE 0
+		RETURN
+	CASEELSE
+		;RESULT = 成材ID（存入独立下标 LOCAL:3，避免被 LOCAL:0 覆盖）
+		LOCAL:3 = RESULT
+		DEBUGPRINTFORML [育苗调试]选中成材={LOCAL:3}
+		;配方数据（内联SELECTCASE，零函数调用）
+		SELECTCASE LOCAL:3
+			CASE 611
+				LOCAL:0 = 193
+				LOCAL:2 = 0
+				LOCAL:1 = 1
+			CASE 607
+				LOCAL:0 = 194
+				LOCAL:2 = 0
+				LOCAL:1 = 1
+			CASE 626
+				LOCAL:0 = 195
+				LOCAL:2 = 0
+				LOCAL:1 = 1
+			CASE 612
+				LOCAL:0 = 201
+				LOCAL:2 = 0
+				LOCAL:1 = 2
+			CASE 608
+				LOCAL:0 = 202
+				LOCAL:2 = 0
+				LOCAL:1 = 2
+			CASE 628
+				LOCAL:0 = 205
+				LOCAL:2 = 0
+				LOCAL:1 = 2
+			CASE 613
+				LOCAL:0 = 208
+				LOCAL:2 = 0
+				LOCAL:1 = 4
+			CASE 615
+				LOCAL:0 = 219
+				LOCAL:2 = 0
+				LOCAL:1 = 6
+			CASE 600
+				LOCAL:0 = 197
+				LOCAL:2 = 1
+				LOCAL:1 = 1
+			CASE 601
+				LOCAL:0 = 198
+				LOCAL:2 = 1
+				LOCAL:1 = 1
+			CASE 602
+				LOCAL:0 = 199
+				LOCAL:2 = 1
+				LOCAL:1 = 1
+			CASE 603
+				LOCAL:0 = 203
+				LOCAL:2 = 1
+				LOCAL:1 = 2
+			CASE 604
+				LOCAL:0 = 209
+				LOCAL:2 = 1
+				LOCAL:1 = 4
+			CASE 605
+				LOCAL:0 = 210
+				LOCAL:2 = 1
+				LOCAL:1 = 4
+			CASE 653
+				LOCAL:0 = 217
+				LOCAL:2 = 1
+				LOCAL:1 = 5
+			CASE 616
+				LOCAL:0 = 200
+				LOCAL:2 = 2
+				LOCAL:1 = 1
+			CASE 617
+				LOCAL:0 = 204
+				LOCAL:2 = 2
+				LOCAL:1 = 2
+			CASE 614
+				LOCAL:0 = 206
+				LOCAL:2 = 2
+				LOCAL:1 = 3
+			CASE 618
+				LOCAL:0 = 207
+				LOCAL:2 = 2
+				LOCAL:1 = 3
+			CASE 620
+				LOCAL:0 = 218
+				LOCAL:2 = 2
+				LOCAL:1 = 5
+			CASE 665
+				LOCAL:0 = 196
+				LOCAL:2 = 3
+				LOCAL:1 = 1
+			CASE 619
+				LOCAL:0 = 211
+				LOCAL:2 = 3
+				LOCAL:1 = 4
+			;--- 原版蔬菜（作物→蔬菜苗） ---
+			CASE 351
+				LOCAL:0 = 151
+				LOCAL:2 = 0
+				LOCAL:1 = 2
+			CASE 352
+				LOCAL:0 = 152
+				LOCAL:2 = 0
+				LOCAL:1 = 3
+			CASE 353
+				LOCAL:0 = 153
+				LOCAL:2 = 0
+				LOCAL:1 = 1
+			CASE 361
+				LOCAL:0 = 161
+				LOCAL:2 = 0
+				LOCAL:1 = 2
+			CASE 362
+				LOCAL:0 = 162
+				LOCAL:2 = 0
+				LOCAL:1 = 3
+			CASE 363
+				LOCAL:0 = 163
+				LOCAL:2 = 0
+				LOCAL:1 = 1
+			CASE 364
+				LOCAL:0 = 164
+				LOCAL:2 = 0
+				LOCAL:1 = 3
+			CASE 371
+				LOCAL:0 = 171
+				LOCAL:2 = 0
+				LOCAL:1 = 3
+			CASE 372
+				LOCAL:0 = 172
+				LOCAL:2 = 0
+				LOCAL:1 = 1
+			CASE 373
+				LOCAL:0 = 173
+				LOCAL:2 = 0
+				LOCAL:1 = 3
+			CASE 374
+				LOCAL:0 = 174
+				LOCAL:2 = 0
+				LOCAL:1 = 2
+			CASE 381
+				LOCAL:0 = 181
+				LOCAL:2 = 0
+				LOCAL:1 = 2
+			CASE 382
+				LOCAL:0 = 182
+				LOCAL:2 = 0
+				LOCAL:1 = 1
+			CASE 383
+				LOCAL:0 = 183
+				LOCAL:2 = 0
+				LOCAL:1 = 2
+			CASEELSE
+				PRINTFORML 这个成材无法育苗……
+				RETURN
+		ENDSELECT
+		DEBUGPRINTFORML [育苗调试]配方数据 产物={LOCAL:0} 种类={LOCAL:2} 等级={LOCAL:1}
+		;附加材料检查（防止草木灰/水变负）
+		IF LOCAL:2 == 1 && ITEM:667 == 0
+			PRINTFORML 草木灰不足，无法进行孢子育苗……
+			RETURN
+		ENDIF
+		IF LOCAL:2 == 3 && VAR_WATER == ""
+			PRINTFORML 还没有打好的水，无法进行扦插育苗……
+			RETURN
+		ENDIF
+		;消耗附加素材
+		IF LOCAL:2 == 1
+			ITEM:667 -= 1
+		ELSEIF LOCAL:2 == 3
+			VAR_WATER = ""
+		ENDIF
+		;消耗成材
+		ITEM:(LOCAL:3) -= 1
+		DEBUGPRINTFORML [育苗调试]扣材后持有={ITEM:(LOCAL:3)}
+		;所需分钟（含设施等级缩短）
+		SELECTCASE LOCAL:1
+			CASE 1
+				LOCAL:1 = 90
+			CASE 2
+				LOCAL:1 = 180
+			CASE 3
+				LOCAL:1 = 300
+			CASE 4
+				LOCAL:1 = 480
+			CASE 5
+				LOCAL:1 = 720
+			CASE 6
+				LOCAL:1 = 1080
+			CASEELSE
+				LOCAL:1 = 120
+		ENDSELECT
+		SIF ITEM:908 > 1
+			LOCAL:1 = LOCAL:1 * (100 - (ITEM:908 - 1) * 10) / 100
+		DEBUGPRINTFORML [育苗调试]需求分钟={LOCAL:1}
+		;入槽
+		育苗槽:ARG:育苗槽_需求分钟 = LOCAL:1
+		育苗槽:ARG:育苗槽_材料 = LOCAL:3
+		育苗槽:ARG:育苗槽_产物 = LOCAL:0
+		育苗槽:ARG:育苗槽_开始时刻 = TIME:1
+		DEBUGPRINTFORML [育苗调试]入槽完成 槽={ARG} 材料={育苗槽:ARG:育苗槽_材料}
+		PRINTFORM 把%ITEMNAME_TR((LOCAL:3))%放进了育苗设施，约
+		CALL 育苗_打印时间((育苗槽:ARG:育苗槽_需求分钟))
+		PRINTFORMW 后完成……
+ENDSELECT
+
+;-------------------------------------------------
+; 收获（完成判定→得产物→清槽）
+; ARG=槽号
+;-------------------------------------------------
+@育苗_收获(ARG)
+#LOCALSIZE 4
+#LOCALSSIZE 1
+;完成判定
+IF TIME:1 - 育苗槽:ARG:育苗槽_开始时刻 < 育苗槽:ARG:育苗槽_需求分钟
+	PRINTFORML 还没完成……
+	RETURN
+ENDIF
+LOCAL:3 = 育苗槽:ARG:育苗槽_材料    ;成材ID（独立下标）
+LOCAL:1 = 育苗槽:ARG:育苗槽_产物
+;查等级（内联，零函数调用）
+SELECTCASE LOCAL:3
+	CASE 611, 607, 626, 600, 601, 602, 616, 665, 353, 363, 372, 382
+		LOCAL:2 = 1
+	CASE 612, 608, 628, 603, 617, 351, 361, 374, 381, 383
+		LOCAL:2 = 2
+	CASE 614, 618, 352, 362, 364, 371, 373
+		LOCAL:2 = 3
+	CASE 613, 604, 605, 619
+		LOCAL:2 = 4
+	CASE 653, 620
+		LOCAL:2 = 5
+	CASE 615
+		LOCAL:2 = 6
+	CASEELSE
+		LOCAL:2 = 0
+ENDSELECT
+;块茎额外+1（用 LOCAL:3 判断成材，先标记）
+LOCAL:0 = 0
+SELECTCASE LOCAL:3
+	CASE 616, 617, 614, 618, 620
+		LOCAL:0 = 1
+ENDSELECT
+;产量（内联等级→产量，叠加到 LOCAL:0）
+SELECTCASE LOCAL:2
+	CASE 1
+		LOCAL:0 += 8
+	CASE 2
+		LOCAL:0 += 7
+	CASE 3
+		LOCAL:0 += 6
+	CASE 4
+		LOCAL:0 += 5
+	CASE 5
+		LOCAL:0 += 4
+	CASE 6
+		LOCAL:0 += 3
+	CASEELSE
+		LOCAL:0 += 0
+ENDSELECT
+;得产物
+ITEM:(LOCAL:1) += LOCAL:0
+;生活系统大修·种地：标记今日育苗获得的模组苗（当晚结算时解锁花屋出售并发放酬金）
+SIF INRANGE(LOCAL:1, 193, 220)
+	花屋苗今日获得:(LOCAL:1) = 1
+;收获提示（醒目显示获取数量，WAIT 等待确认，避免被菜单刷新清除）
+SETCOLOR C_YELLOW
+PRINTFORMW 收获完成！获得了{LOCAL:0}个「%ITEMNAME_TR((LOCAL:1))%」！
+RESETCOLOR
+;清槽
+育苗槽:ARG:育苗槽_材料 = 0
+育苗槽:ARG:育苗槽_产物 = 0
+育苗槽:ARG:育苗槽_开始时刻 = 0
+育苗槽:ARG:育苗槽_需求分钟 = 0
+
+;-------------------------------------------------
+; 操作耗时（放入/收获）：5 分钟，时停折抵 TSP
+;-------------------------------------------------
+@育苗_耗时
+#LOCALSIZE 1
+#LOCALSSIZE 1
+IF FLAG:70 == 0
+	TIME += 5
+ELSE
+	BASE:MASTER:TSP -= 15
+ENDIF
+
+;-------------------------------------------------
+; 已占用槽位数（显示用）
+;-------------------------------------------------
+@已占用槽数
+#FUNCTION
+#LOCALSIZE 2
+#LOCALSSIZE 1
+LOCAL:0 = 0
+FOR LOCAL:1, 0, 3
+	LOCAL = LOCAL:1    ;槽号（单段下标）
+	SIF 育苗槽:LOCAL:育苗槽_材料
+		LOCAL:0 ++
+NEXT
+RETURNF LOCAL:0
+
+;-------------------------------------------------
+; 显示可育苗的配方，返回选中的成材ID
+; 返回：-1=无可育配方 0=放弃 其他=成材ID
+;-------------------------------------------------
+@育苗_显示配方
+#LOCALSIZE 1
+#LOCALSSIZE 1
+
+DEBUGPRINTFORML [育苗调试]显示配方开始
+PRINTFORML 【育苗】选择要放入的成材（消耗1个成材育成种子）：
+PRINTL
+
+;--- 种子类 ---
+CALL 育苗_配方行(611, 193, 0, 1)	;山菜→山菜の種
+CALL 育苗_配方行(607, 194, 0, 1)	;薬草→薬草の種
+CALL 育苗_配方行(626, 195, 0, 1)	;树莓→树莓の種
+CALL 育苗_配方行(612, 201, 0, 2)	;毒草→毒草の種
+CALL 育苗_配方行(608, 202, 0, 2)	;高級薬草→高級薬草の種
+CALL 育苗_配方行(628, 205, 0, 2)	;木通果→木通果の種
+CALL 育苗_配方行(613, 208, 0, 4)	;特薬草→特薬草の種
+CALL 育苗_配方行(615, 219, 0, 6)	;雪霊草→雪霊草の種
+;--- 孢子类（消耗草木灰） ---
+CALL 育苗_配方行(600, 197, 1, 1)	;普通的菌菇→普通菌菇の胞子
+CALL 育苗_配方行(601, 198, 1, 1)	;毒菌菇→毒菌菇の胞子
+CALL 育苗_配方行(602, 199, 1, 1)	;黏性菌菇→黏性菌菇の胞子
+CALL 育苗_配方行(603, 203, 1, 2)	;冬虫夏草→冬虫夏草の菌糸
+CALL 育苗_配方行(604, 209, 1, 4)	;可疑菌菇→可疑菌菇の胞子
+CALL 育苗_配方行(605, 210, 1, 4)	;魔法菌菇→魔法菌菇の胞子
+CALL 育苗_配方行(653, 217, 1, 5)	;魔界菌菇→魔界菌菇の胞子
+;--- 块茎/球根类 ---
+CALL 育苗_配方行(616, 200, 2, 1)	;山芋→山芋の種芋
+CALL 育苗_配方行(617, 204, 2, 2)	;姜黄→姜黄の根茎
+CALL 育苗_配方行(614, 206, 2, 3)	;彼岸花→彼岸花の球根
+CALL 育苗_配方行(618, 207, 2, 3)	;高麗人参→高麗人参の根苗
+CALL 育苗_配方行(620, 218, 2, 5)	;曼陀罗草→曼陀罗草の根
+	;--- 根切类（消耗打好的水） ---
+	CALL 育苗_配方行(665, 196, 3, 1)	;山葡萄→山葡萄の挿し木
+	CALL 育苗_配方行(619, 211, 3, 4)	;苦根→苦根の根挿し
+	;--- 蔬菜类（原版作物→蔬菜苗） ---
+	CALL 育苗_配方行(351, 151, 0, 2)	;卷心菜→卷心菜苗
+	CALL 育苗_配方行(352, 152, 0, 3)	;草莓→草莓苗
+	CALL 育苗_配方行(353, 153, 0, 1)	;芜菁→芜菁苗
+	CALL 育苗_配方行(361, 161, 0, 2)	;黄瓜→黄瓜苗
+	CALL 育苗_配方行(362, 162, 0, 3)	;番茄→番茄苗
+	CALL 育苗_配方行(363, 163, 0, 1)	;洋葱→洋葱苗
+	CALL 育苗_配方行(364, 164, 0, 3)	;西瓜→西瓜苗
+	CALL 育苗_配方行(371, 171, 0, 3)	;茄子→茄子苗
+	CALL 育苗_配方行(372, 172, 0, 1)	;马铃薯→马铃薯苗
+	CALL 育苗_配方行(373, 173, 0, 3)	;南瓜→南瓜苗
+	CALL 育苗_配方行(374, 174, 0, 2)	;大麦→大麦苗
+	CALL 育苗_配方行(381, 181, 0, 2)	;白菜→白菜苗
+	CALL 育苗_配方行(382, 182, 0, 1)	;胡萝卜→胡萝卜苗
+	CALL 育苗_配方行(383, 183, 0, 2)	;葱→葱苗
+	PRINTL [0] 取消
+$育苗_输入
+INPUT
+DEBUGPRINTFORML [育苗调试]配方输入={RESULT}
+SELECTCASE RESULT
+	CASE 0
+		DEBUGPRINTFORML [育苗调试]配方取消
+		RETURN 0
+	CASE 351 TO 665
+		;白名单校验：必须是展示过的配方成材（内联判断，不依赖函数RESULT传递）
+		;（351~383 为原版蔬菜作物，600~665 为采集素材）
+		LOCAL = RESULT
+		DEBUGPRINTFORML [育苗调试]配方校验成材={LOCAL}
+		SELECTCASE LOCAL
+			CASE 600, 601, 602, 603, 604, 605, 607, 608, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 626, 628, 653, 665, 351, 352, 353, 361, 362, 363, 364, 371, 372, 373, 374, 381, 382, 383
+				DEBUGPRINTFORML [育苗调试]配方校验通过={LOCAL}
+				RETURN LOCAL
+		ENDSELECT
+ENDSELECT
+PRINTFORML 没有这个选项
+CLEARLINE 1
+GOTO 育苗_输入
+
+;-------------------------------------------------
+; 显示单个配方行
+; ARG:0=成材ID ARG:1=種ID ARG:2=種類(0種/1胞子/2塊茎/3根切) ARG:3=等級
+;-------------------------------------------------
+@育苗_配方行(ARG:0, ARG:1, ARG:2, ARG:3)
+#LOCALSIZE 2
+#LOCALSSIZE 1
+
+LOCAL = ARG:0    ;成材ID（单段变量，避免下标表达式歧义）
+DEBUGPRINTFORML [育苗调试]配方行 ARG:0={ARG:0} 持有={ITEM:LOCAL} 产物={ARG:1} 种类={ARG:2} 等级={ARG:3}
+;无成材不显示
+SIF ITEM:LOCAL == 0
+	RETURN 0
+
+PRINTFORM [{ARG:0}] %ITEMNAME_TR(LOCAL)% → %ITEMNAME_TR((ARG:1))%
+;产量（内联等级→产量，零函数调用）
+SELECTCASE ARG:3
+	CASE 1
+		LOCAL = 8
+	CASE 2
+		LOCAL = 7
+	CASE 3
+		LOCAL = 6
+	CASE 4
+		LOCAL = 5
+	CASE 5
+		LOCAL = 4
+	CASE 6
+		LOCAL = 3
+	CASEELSE
+		LOCAL = 0
+ENDSELECT
+;块茎额外+1
+SIF ARG:2 == 2
+	LOCAL += 1
+;（产量数值不再显示，改为模糊指引）
+;所需时间（含设施等级缩短）——分段打印
+PRINTFORM 　约
+CALL 育苗_打印时间(育苗_需求时间(ARG:3))
+;附加需求提示（缺失时标注不足，仍显示配方）
+IF ARG:2 == 1
+	PRINTFORM 　（消耗1个草木灰）
+	IF ITEM:667 == 0
+		SETCOLOR 0x994C00
+		PRINTFORM 【草木灰不足】
+		RESETCOLOR
+	ENDIF
+ELSEIF ARG:2 == 3
+	PRINTFORM 　（消耗打好的水）
+	IF VAR_WATER == ""
+		SETCOLOR 0x994C00
+		PRINTFORM 【水不足】
+		RESETCOLOR
+	ENDIF
+ENDIF
+PRINTL
+RETURN 1
+
+;-------------------------------------------------
+; 配方数据（行内函数，避免CALL/RESULT传递问题）
+; 成材ID → 产物种子ID（0=无效）
+;-------------------------------------------------
+@育苗_需求时间(ARG)
+#FUNCTION
+#LOCALSIZE 1
+#LOCALSSIZE 1
+SELECTCASE ARG
+	CASE 1
+		LOCAL = 90
+	CASE 2
+		LOCAL = 180
+	CASE 3
+		LOCAL = 300
+	CASE 4
+		LOCAL = 480
+	CASE 5
+		LOCAL = 720
+	CASE 6
+		LOCAL = 1080
+	CASEELSE
+		LOCAL = 120
+ENDSELECT
+;设施等级缩短
+SIF ITEM:908 > 1
+	LOCAL = LOCAL * (100 - (ITEM:908 - 1) * 10) / 100
+RETURNF LOCAL
+
+;-------------------------------------------------
+; 打印"X小时Y分 / X分钟"（分段 PRINTFORM，无字符串拼接）
+;-------------------------------------------------
+@育苗_打印时间(ARG)
+#LOCALSIZE 2
+#LOCALSSIZE 1
+LOCAL:0 = ARG / 60
+LOCAL:1 = ARG % 60
+IF LOCAL:0
+	PRINTFORM %TOSTR(LOCAL:0)%
+	PRINTFORM 小时
+	IF LOCAL:1
+		PRINTFORM %TOSTR(LOCAL:1)%
+		PRINTFORM 分
+	ENDIF
+ELSE
+	PRINTFORM %TOSTR(LOCAL:1)%
+	PRINTFORM 分钟
+ENDIF
+
+;-------------------------------------------------
+;実行判定
+;-------------------------------------------------
+@COM_ABLE471
+#LOCALSIZE 1
+#LOCALSSIZE 1
+;生活系统大修 - 种地系统开关
+SIF !生活系统_种地
+	RETURN 0
+;一括管理
+SIF GLOBAL_COMABLE(471)
+	RETURN RESULT
+;育苗设施（家具908）
+SIF ITEM:908 < 1
+	RETURN 0
+;必须在可进行家庭菜园的场所（设施放置于菜园）
+SIF !家庭菜園可(CFLAG:MASTER:現在位置) && !IS_GAP_GUEST(MASTER)
+	RETURN 0
+;気力0
+SIF BASE:MASTER:気力 <= 0
+	RETURN 0
+SIF CFLAG:诶嘿嘿 == 2
+	RETURN 0
+RETURN 1
+
+@COM471_TAGS
+#LOCALSIZE 1
+#LOCALSSIZE 1
+#FUNCTION
+SETBIT LOCAL, BIT_家事コマンド
+RETURNF LOCAL
