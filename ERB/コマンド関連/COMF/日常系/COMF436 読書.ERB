@@ -223,10 +223,12 @@ SELECTCASE TFLAG:193
 					EXP:TARGET:調合経験 += READING_EXP
 			CASE 6
 				;生活系统大修：耕种（由子系统开关控制）
-				SIF 生活系统_种地
+				IF 生活系统_种地
 					EXP:MASTER:耕种経験 += READING_EXP
-				SIF 生活系统_种地 && TARGET > 0 && MAGIC_DLC_等级重置
-					EXP:TARGET:耕种経験 += READING_EXP
+					PRINTFORML 获得了{READING_EXP}点耕种经验！
+					SIF TARGET > 0 && MAGIC_DLC_等级重置
+						EXP:TARGET:耕种経験 += READING_EXP
+				ENDIF
 			CASEELSE
 				EXP:MASTER:伐採経験 += READING_EXP
 				SIF TARGET > 0 && MAGIC_DLC_等级重置

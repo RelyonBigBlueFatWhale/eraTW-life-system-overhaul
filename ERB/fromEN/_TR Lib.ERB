@@ -688,6 +688,19 @@ IF !TFLAG:経験表示
 		;SIF EXP_UP(LOCAL, 選択中キャラID)
 		;	SETCOLOR C_YELLOW
 		PRINTFORM %LOCALS% 
+		;生活系统大修：耕种经验进度条（当前值/升级需求，仅DLC开启）
+		IF LOCAL == 139 && 生活系统_种地
+			LOCAL:3 = TALENT:選択中キャラID:耕种Lv
+			LOCAL:4 = 0
+			SIF 悟性系统开关 == 1
+				LOCAL:4 = TALENT:選択中キャラID:悟性
+			LOCAL:5 = CALC_ABL_DEMAND(58, EXPLV:(LOCAL:3 + 3 - LOCAL:4))
+			LOCAL:6 = 0
+			SIF LOCAL:5 > 0
+				LOCAL:6 = EXP:選択中キャラID:139 * 5 / LOCAL:5
+			LOCAL:7 = 5 - LOCAL:6
+			PRINTFORM （{EXP:選択中キャラID:139}/{LOCAL:5}）【%"■" * LOCAL:6%%"□" * LOCAL:7%】
+		ENDIF
 		RESETCOLOR
 		SIF (++表示項目数) % 4 == 0 
 			PRINTL 

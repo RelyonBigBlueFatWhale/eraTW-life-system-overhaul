@@ -361,8 +361,10 @@ ENDSELECT
 ;得产物
 ITEM:(LOCAL:1) += LOCAL:0
 ;生活系统大修：耕种经验（育苗成功按种子等级获得，由子系统开关控制）
-SIF 生活系统_种地
+IF 生活系统_种地
 	EXP:MASTER:耕种経験 += LOCAL:2 * 2
+	PRINTFORML 获得了{LOCAL:2 * 2}点耕种经验！
+ENDIF
 ;生活系统大修·种地：标记今日育苗获得的模组苗（当晚结算时解锁花屋出售并发放酬金）
 SIF INRANGE(LOCAL:1, 193, 220)
 	花屋苗今日获得:(LOCAL:1) = 1
