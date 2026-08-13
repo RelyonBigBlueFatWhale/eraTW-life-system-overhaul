@@ -1,11 +1,6 @@
 ﻿@QOL_SHOW_USERCOM
 #LOCALSIZE 1
 #LOCALSSIZE 1
-;生活系统大修：任一子系统开启时启用自定义指令显示开关（育苗/开荒注册于 Custom_Commands，
-;行动菜单 [自定义]；本函数在行动菜单显示时、Add_Custom_List_COMS 之前执行，覆盖读档后首次查看）
-IF 生活系统_种地 || 生活系统_养鸡 || 生活系统_酿酒 || 生活系统_钓鱼
-	ADD_CUSTOM_COM_SWITCH = 1
-ENDIF
 #DIM DYNAMIC printKojoCom
 #DIM DYNAMIC HIGHLIGHT_SCOM
 #DIM DYNAMIC L_CURRENT_POSE
@@ -14,6 +9,11 @@ ENDIF
 #DIMS DYNAMIC L_COM_COLOR
 #DIMS DYNAMIC L_OPTION_NAME
 #DIMS DYNAMIC L_BTN_HTML
+;生活系统大修：任一子系统开启时启用自定义指令显示开关（育苗/开荒注册于 Custom_Commands，
+;行动菜单 [自定义]；本函数在行动菜单显示时、Add_Custom_List_COMS 之前执行，覆盖读档后首次查看）
+IF 生活系统_种地 || 生活系统_养鸡 || 生活系统_酿酒 || 生活系统_钓鱼
+	ADD_CUSTOM_COM_SWITCH = 1
+ENDIF
 
 FOR LOCAL,0,800
 	;-----------------------------------------------------------
