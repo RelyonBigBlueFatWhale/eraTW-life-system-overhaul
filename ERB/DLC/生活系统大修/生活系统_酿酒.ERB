@@ -64,14 +64,20 @@ RETURN
 #DIM DYNAMIC 醸造量
 #DIM DYNAMIC 酒ID
 #DIM DYNAMIC CAN_ADD_ITEMS
+#DIM DYNAMIC 行数
 桶号 = ARG
 
 $酒桶_LOOP
 
-;载入该酒桶的状态（酒桶0=原版酒虫，直接使用其全局状态；酒桶1～5载入酒桶变量）
+;载入目标桶的状态（酒桶0=原版酒虫，直接使用全局状态；酒桶1～5从独立数组载入）
+;注意：载入其他桶会覆盖全局 VAR_FERMENT/DAY:10，因此切换离开酒桶0时会把其状态
+;备份到数组槽0（见"上一个/下一个酒桶"分支）；回到酒桶0时据此恢复，避免内容物串桶
 IF 桶号 > 0
 	VAR_FERMENT = %酒桶_内容物:桶号%
 	DAY:10 = 酒桶_天数:桶号
+ELSEIF 酒桶_内容物:0 != ""
+	VAR_FERMENT = %酒桶_内容物:0%
+	DAY:10 = 酒桶_天数:0
 ENDIF
 ;空桶自动积起清水（与酒虫的瓶子一样，桶里总有内容物，可直接添加添加物开始酿造）
 IF VAR_FERMENT == ""
@@ -80,7 +86,7 @@ IF VAR_FERMENT == ""
 ENDIF
 酒ID = ALC_ID()
 醸造量 = GETMETH_INT(0, "酒データ", 酒ID, "醸造数")
-LOCAL:2 = LINECOUNT
+行数 = LINECOUNT
 
 ;显示当前桶的状态（酒桶0=原版酒虫）
 IF 桶号 == 0
@@ -113,9 +119,17 @@ LOCALS, LOCAL,
 }
 SELECTCASE RESULT
 	CASE 0
-		;什么也不做/返回——写回后退出指令（酒桶0即酒虫本身，写回无副作用）
+		;什么也不做/返回——写回当前桶状态（酒桶0即酒虫本身，写回仅作备份）
 		酒桶_内容物:桶号 = %VAR_FERMENT%
 		酒桶_天数:桶号 = DAY:10
+		;退出前：若当前是酒桶1～5，把全局恢复为酒桶0（原版酒虫）的状态，
+		;避免退出后 @酒造 用其他桶的内容推进原版全局；随后清除切换备份
+		IF 桶号 > 0
+			VAR_FERMENT = %酒桶_内容物:0%
+			DAY:10 = 酒桶_天数:0
+		ENDIF
+		酒桶_内容物:0 =
+		酒桶_天数:0 = 0
 		RETURN -1
 	CASE 1
 		;取出桶中物，换入携带的水（与原版酒虫设定一致）
@@ -163,7 +177,7 @@ SELECTCASE RESULT
 		;写回并刷新显示
 		酒桶_内容物:桶号 = %VAR_FERMENT%
 		酒桶_天数:桶号 = DAY:10
-		CLEARLINE LINECOUNT - LOCAL:2
+		CLEARLINE LINECOUNT - 行数
 		GOTO 酒桶_LOOP
 	CASE 2
 		;添加物品（进入添加物选择菜单，直接操作载入的全局状态）
@@ -171,13 +185,13 @@ SELECTCASE RESULT
 		CALL 酒桶_行动耗时
 		酒桶_内容物:桶号 = %VAR_FERMENT%
 		酒桶_天数:桶号 = DAY:10
-		CLEARLINE LINECOUNT - LOCAL:2
+		CLEARLINE LINECOUNT - 行数
 		GOTO 酒桶_LOOP
 	CASE 3
 		;操纵时间造酒（消费TSP2400，推进1天发酵）
 		IF GETMETH_STR(0, "酒データ", 酒ID, "変化先") == ""
 			PRINTFORMW 对%VAR_FERMENT%没有意义
-			CLEARLINE LINECOUNT - LOCAL:2
+			CLEARLINE LINECOUNT - 行数
 			GOTO 酒桶_LOOP
 		ENDIF
 		PRINTFORML %CALLNAME:MASTER%使用时间停止能力强行加速了酒桶中的时间
@@ -186,13 +200,13 @@ SELECTCASE RESULT
 		CALL 酒桶_行动耗时
 		酒桶_内容物:桶号 = %VAR_FERMENT%
 		酒桶_天数:桶号 = DAY:10
-		CLEARLINE LINECOUNT - LOCAL:2
+		CLEARLINE LINECOUNT - 行数
 		GOTO 酒桶_LOOP
 	CASE 4
 		;绯红之王（消费TSP4000+绯红之王道具，直接推进9天）
 		IF GETMETH_STR(0, "酒データ", 酒ID, "変化先") == ""
 			PRINTFORMW 对%VAR_FERMENT%没有意义
-			CLEARLINE LINECOUNT - LOCAL:2
+			CLEARLINE LINECOUNT - 行数
 			GOTO 酒桶_LOOP
 		ENDIF
 		PRINTFORML %CALLNAME:MASTER%消除了时间得到了『结果』
@@ -208,21 +222,21 @@ SELECTCASE RESULT
 		CALL 酒桶_行动耗时
 		酒桶_内容物:桶号 = %VAR_FERMENT%
 		酒桶_天数:桶号 = DAY:10
-		CLEARLINE LINECOUNT - LOCAL:2
+		CLEARLINE LINECOUNT - 行数
 		GOTO 酒桶_LOOP
 	CASE 5
 		;翻页：上一个酒桶
 		酒桶_内容物:桶号 = %VAR_FERMENT%
 		酒桶_天数:桶号 = DAY:10
 		桶号 --
-		CLEARLINE LINECOUNT - LOCAL:2
+		CLEARLINE LINECOUNT - 行数
 		GOTO 酒桶_LOOP
 	CASE 6
 		;翻页：下一个酒桶
 		酒桶_内容物:桶号 = %VAR_FERMENT%
 		酒桶_天数:桶号 = DAY:10
 		桶号 ++
-		CLEARLINE LINECOUNT - LOCAL:2
+		CLEARLINE LINECOUNT - 行数
 		GOTO 酒桶_LOOP
 	CASEELSE
 		CLEARLINE 1

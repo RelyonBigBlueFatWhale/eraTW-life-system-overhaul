@@ -6,7 +6,7 @@
 ;耕种Lv 每级减少 10% 消耗；菜园上限 8 块（隙间耕地 910 时 240）
 ;-------------------------------------------------
 @ADD_CUSTOM_COM511
-#LOCALSIZE 3
+#LOCALSIZE 4
 #LOCALSSIZE 1
 
 ;当前畝数与上限
@@ -48,7 +48,10 @@ ENDIF
 生活系统_开荒数 ++
 EXP:MASTER:耕种经验 += 2
 PRINTFORML 挥动锄头，开垦出了一片新的耕地！获得了2点耕种经验！
-PRINTFORML 现在共有{生活系统_畝数()}块可耕种土地（上限{LOCAL:1}块）
+;注：ASK_YN 与内嵌函数调用（{生活系统_畝数()} 等）会覆盖 LOCAL，此处重新取值后再显示
+LOCAL:1 = 生活系统_畝上限()
+LOCAL:3 = 生活系统_畝数()
+PRINTFORML 现在共有{LOCAL:3}块可耕种土地（上限{LOCAL:1}块）
 ;消耗（时停折抵 TSP）
 IF FLAG:70 == 0
 	TIME += 900
@@ -58,8 +61,9 @@ IF FLAG:70 == 0
 ELSE
 	BASE:MASTER:TSP -= 900 * 3
 ENDIF
-BASE:MASTER:体力 -= 2000 * LOCAL:0 / 100
-BASE:MASTER:気力 -= 2000 * LOCAL:0 / 100
+;体力/气力扣除（内联重算消耗值，避免 LOCAL:0 被 ASK_YN 等调用覆盖导致异常扣除）
+BASE:MASTER:体力 -= 2000 * (100 - TALENT:MASTER:耕种Lv * 10) / 100
+BASE:MASTER:気力 -= 2000 * (100 - TALENT:MASTER:耕种Lv * 10) / 100
 RETURN 1
 
 ;-------------------------------------------------
