@@ -67,7 +67,16 @@ IF FLAG:70 == 0
 ELSE
 	BASE:MASTER:TSP -= 900 * 3
 ENDIF
-;体力/气力扣除：直接 SET 理论计算值（不用 -= 复合扣除，避免与次日清晨 DOWNBASE 延迟入账叠加造成"超扣"）
+;体力/气力扣除前：先把未入账的延迟消耗（DOWNBASE——调合/料理等使用的"延迟入账"机制）
+;立即结算并清零——否则次日清晨 BEFORETRAIN 会把它们与本次扣除叠加入账，造成"开荒超扣"的假象
+IF DOWNBASE:MASTER:体力 > 0 || DOWNBASE:MASTER:気力 > 0
+	PRINTFORML 顺带结算了此前行动积累的延迟消耗：体力{DOWNBASE:MASTER:体力}、气力{DOWNBASE:MASTER:気力}
+	BASE:MASTER:体力 -= DOWNBASE:MASTER:体力
+	BASE:MASTER:気力 -= DOWNBASE:MASTER:気力
+	DOWNBASE:MASTER:体力 = 0
+	DOWNBASE:MASTER:気力 = 0
+ENDIF
+;体力/气力扣除：直接 SET 理论计算值（扣除量精确等于设计值，负值截断）
 BASE:MASTER:体力 = MAX(0, BASE:MASTER:体力 - 2000 * (100 - TALENT:MASTER:耕种Lv * 10) / 100)
 BASE:MASTER:気力 = MAX(0, BASE:MASTER:気力 - 2000 * (100 - TALENT:MASTER:耕种Lv * 10) / 100)
 RETURN 1
