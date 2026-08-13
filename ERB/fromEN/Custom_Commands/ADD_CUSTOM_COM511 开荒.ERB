@@ -112,3 +112,10 @@ RETURN 1
 #FUNCTION
 SETBIT LOCAL, BIT_家事コマンド
 RETURNF LOCAL
+
+;-------------------------------------------------
+; 动态名字注册（Custom_Commands 系统：GETMETHS(@"Custom_COM{ARG}_NAME","Custom COM")）
+;-------------------------------------------------
+@Custom_COM511_NAME
+#FUNCTIONS
+RETURNF "开荒"

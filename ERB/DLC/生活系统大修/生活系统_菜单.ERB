@@ -18,6 +18,12 @@
 #LOCALSIZE 2
 #LOCALSSIZE 1
 LOCAL = LINECOUNT
+;生活系统大修：确保 QOL 物品数据已注册（花屋苗 SHOP_COND 等条件键）——
+;每次启动首次进入主菜单时执行一次（QOL_ITEM_INIT 仅在版本号变化时注册，补丁更新不改变版本号）
+IF !生活系统_QOL已注册
+	生活系统_QOL已注册 = 1
+	CALL QOL_ITEM_DATA_REGISTER
+ENDIF
 $LIFE_MENU
 PRINTFORML 生活系统大修 · 主菜单
 PRINTFORML 对养鸡/种地/酿酒/钓鱼生活玩法的强化，各子系统独立启停
