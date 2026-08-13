@@ -33,12 +33,14 @@ ENDIF
 ;注：时间上限到午夜为止——若跨日推进会触发清晨结算（延迟的调合/料理等DOWNBASE消耗一并入账），
 ;造成"开荒多扣了体力气力"的错觉，故用 SIF TIME > 1440 截断
 LOCAL:0 = 100 - TALENT:MASTER:耕种Lv * 10
-IF BASE:MASTER:体力 < 2000 * LOCAL:0 / 100 || BASE:MASTER:気力 < 2000 * LOCAL:0 / 100
+;检查（按开荒后真实预期值判定：先扣除未入账的 DOWNBASE 延迟消耗，再扣设计值——
+;若只按当前体力检查，DOWNBASE 结算后体力可能跌破设计值，SET 理论值时会被 MAX(0,...) 截断为 0）
+IF BASE:MASTER:体力 - DOWNBASE:MASTER:体力 < 2000 * LOCAL:0 / 100 || BASE:MASTER:気力 - DOWNBASE:MASTER:気力 < 2000 * LOCAL:0 / 100
 	PRINTFORML 体力与气力不足以开垦荒地……
 	RETURN 1
 ENDIF
-;体力低于500会触发"体力濒临极限"强制跳过当日，开荒前预留底线
-IF BASE:MASTER:体力 - 2000 * LOCAL:0 / 100 <= 500
+;体力低于500会触发"体力濒临极限"强制跳过当日，开荒前预留底线（同样按 DOWNBASE 结算后的预期值判定）
+IF BASE:MASTER:体力 - DOWNBASE:MASTER:体力 - 2000 * LOCAL:0 / 100 <= 500
 	PRINTFORML 开垦后体力会跌破极限而直接昏倒，还是先休息一下吧……
 	RETURN 1
 ENDIF
