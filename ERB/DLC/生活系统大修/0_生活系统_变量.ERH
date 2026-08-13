@@ -40,6 +40,7 @@
 #DIM SAVEDATA 生活系统_开荒日期	;最近一次开荒的 DAY:0（每日限一次）
 #DIM SAVEDATA 生活系统_开荒跳过濒临极限	;开荒后冻结一次"体力濒临极限结束当日"（EVENTCOMEND 检查并清除）
 #DIM SAVEDATA 生活系统_开荒后体力	;开荒冻结期间暂存的理论剩余体力（EVENTCOMEND 恢复）
+#DIM SAVEDATA 生活系统_开荒后気力	;开荒冻结期间暂存的理论剩余气力（EVENTCOMEND 恢复）
 #DIM SAVEDATA 花屋苗解锁, 220	;模组苗（193~219）的花屋出售解锁状态（按苗ITEM_ID索引，0=未解锁）
 #DIM SAVEDATA 花屋苗今日获得, 220	;今日通过育苗获得的模组苗标记（当晚结算时处理）
 
