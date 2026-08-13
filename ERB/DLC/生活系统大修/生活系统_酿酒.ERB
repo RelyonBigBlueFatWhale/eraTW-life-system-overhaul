@@ -66,6 +66,12 @@ RETURN
 #DIM DYNAMIC CAN_ADD_ITEMS
 #DIM DYNAMIC 行数
 #DIM DYNAMIC 切换中
+#DIM DYNAMIC 有水
+#DIM DYNAMIC 可添加
+#DIM DYNAMIC 可TSP
+#DIM DYNAMIC 可绯红
+#DIM DYNAMIC 可上一个
+#DIM DYNAMIC 可下一个
 桶号 = ARG
 切换中 = 0	;仅"上一个/下一个酒桶"切换后为1——首次进入时永远以全局（酒桶0真实状态）为准，避免残留备份覆盖
 
@@ -105,24 +111,33 @@ ENDIF
 DRAWLINE
 
 ;选项1：取出桶中物，换入携带的水（与原版酒虫设定一致，未带水时不可用）
-LOCAL = 1
+;注：选项条件一律先用 #DIM 保存再传入 ASK_M——参数列表中的函数调用（GETMETH_STR/ALC_ID 等）
+;会覆盖 LOCAL/LOCALS，直接传 LOCAL 会导致"文本正常但选项灰显"
+有水 = 1
 LOCALS '= @"取出%VAR_FERMENT%，换入%VAR_WATER%"
 SIF VAR_WATER == ""
 	LOCALS '= "没有带着可以替换的水"
-	LOCAL = 0
+	有水 = 0
+ENDIF
 ;退出选项文本（酒桶0沿用原版"什么也不做"）
 LOCALS:1 = 返回
 SIF 桶号 == 0
 	LOCALS:1 = 什么也不做
+ENDIF
+可添加 = VAR_FERMENT != ""
+可TSP = VAR_FERMENT != "" && BASE:MASTER:8 >= 2400
+可绯红 = VAR_FERMENT != "" && BASE:MASTER:8 >= 4000 && ITEM:绯红之王 && GETMETH_STR(0, "酒データ", ALC_ID(VAR_FERMENT), "変化先") != "0"
+可上一个 = 桶号 > 0
+可下一个 = 桶号 < ITEM:酒桶
 
 {
 CALL ASK_M(LOCALS:1, 1,
-LOCALS, LOCAL,
-"添加物品", VAR_FERMENT != "",
-"操纵时间造酒（TSP2400）", VAR_FERMENT != "" && BASE:MASTER:8 >= 2400,
-"『绯红之王』！（TSP4000&道具）", VAR_FERMENT != "" && BASE:MASTER:8 >= 4000 && ITEM:绯红之王 && GETMETH_STR(0, "酒データ", ALC_ID(VAR_FERMENT), "変化先") != "0",
-"上一个酒桶", 桶号 > 0,
-"下一个酒桶", 桶号 < ITEM:酒桶)
+LOCALS, 有水,
+"添加物品", 可添加,
+"操纵时间造酒（TSP2400）", 可TSP,
+"『绯红之王』！（TSP4000&道具）", 可绯红,
+"上一个酒桶", 可上一个,
+"下一个酒桶", 可下一个)
 }
 SELECTCASE RESULT
 	CASE 0
