@@ -115,13 +115,14 @@ DRAWLINE
 ;会覆盖 LOCAL/LOCALS，直接传 LOCAL 会导致"文本正常但选项灰显"
 有水 = 1
 LOCALS '= @"取出%VAR_FERMENT%，换入%VAR_WATER%"
-SIF VAR_WATER == ""
+;注：必须用 IF 块而非 SIF——SIF 只影响一行，会把"有水 = 0"变成无条件执行导致选项恒灰显
+IF VAR_WATER == ""
 	LOCALS '= "没有带着可以替换的水"
 	有水 = 0
 ENDIF
 ;退出选项文本（酒桶0沿用原版"什么也不做"）
 LOCALS:1 = 返回
-SIF 桶号 == 0
+IF 桶号 == 0
 	LOCALS:1 = 什么也不做
 ENDIF
 可添加 = VAR_FERMENT != ""
