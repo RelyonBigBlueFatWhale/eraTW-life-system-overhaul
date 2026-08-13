@@ -24,6 +24,11 @@ IF !生活系统_QOL已注册
 	生活系统_QOL已注册 = 1
 	CALL QOL_ITEM_DATA_REGISTER
 ENDIF
+;生活系统大修：育苗/开荒注册于自定义指令系统（Custom_Commands），
+;任一子系统开启时自动启用自定义指令显示开关（ADD_CUSTOM_COM_SWITCH，行动菜单 [自定义]）——
+;仅设置系统既有的 SAVEDATA 开关变量，不修改系统逻辑；全部子系统关闭时不干预玩家设置
+SIF 生活系统_种地 || 生活系统_养鸡 || 生活系统_酿酒 || 生活系统_钓鱼
+	ADD_CUSTOM_COM_SWITCH = 1
 $LIFE_MENU
 PRINTFORML 生活系统大修 · 主菜单
 PRINTFORML 对养鸡/种地/酿酒/钓鱼生活玩法的强化，各子系统独立启停
