@@ -23,26 +23,26 @@ IF 生活系统_开荒日期 == DAY:0
 	PRINTFORML 今天已经很累了，没有心力再开拓耕地了……
 	RETURN 1
 ENDIF
-;时间检查：开荒需约900分钟（15小时），9:00（540分钟）之后执行会跨日，
+;时间检查：开荒需约480分钟（8小时），9:00（540分钟）之后执行会跨日，
 ;触发清晨结算把延迟的体力/气力消耗一并入账（"开荒多扣了体力气力"），故 9:00 后禁止开荒
 IF TIME > 540
 	PRINTFORML 今天已经太晚了，种田是需要早睡早起的工作哦
 	RETURN 1
 ENDIF
-;消耗计算（基础：时间900分钟、体力2000、气力2000；耕种Lv每级-10%）
+;消耗计算（基础：时间480分钟、体力800、气力800；耕种Lv每级-10%）
 ;注：时间上限到午夜为止——若跨日推进会触发清晨结算（延迟的调合/料理等DOWNBASE消耗一并入账），
 ;造成"开荒多扣了体力气力"的错觉，故用 SIF TIME > 1440 截断
 LOCAL:0 = 100 - TALENT:MASTER:耕种Lv * 10
-IF BASE:MASTER:体力 < 2000 * LOCAL:0 / 100 || BASE:MASTER:気力 < 2000 * LOCAL:0 / 100
+IF BASE:MASTER:体力 < 800 * LOCAL:0 / 100 || BASE:MASTER:気力 < 800 * LOCAL:0 / 100
 	PRINTFORML 体力与气力不足以开垦荒地……
 	RETURN 1
 ENDIF
-;体力低于500会触发"体力濒临极限"强制跳过当日，开荒前预留底线
-IF BASE:MASTER:体力 - 2000 * LOCAL:0 / 100 <= 500
+;体力低于500会触发"体力濒临极限"强制跳过当日，开荒后预留充足余裕（不低于1000）
+IF BASE:MASTER:体力 - 800 * LOCAL:0 / 100 <= 1000
 	PRINTFORML 开垦后体力会跌破极限而直接昏倒，还是先休息一下吧……
 	RETURN 1
 ENDIF
-PRINTFORML 开垦一片荒地需要约900分钟（15小时，时间不足时到午夜为止），消耗体力{2000 * LOCAL:0 / 100}、气力{2000 * LOCAL:0 / 100}
+PRINTFORML 开垦一片荒地需要约480分钟（8小时，时间不足时到午夜为止），消耗体力{800 * LOCAL:0 / 100}、气力{800 * LOCAL:0 / 100}
 PRINTFORML 开垦后剩余可开垦土地：{LOCAL:2 - 1}块
 CALL ASK_YN
 ;ASK_YN：[0]是 [1]否 → RESULT 0=是 1=否
@@ -60,16 +60,16 @@ LOCAL:3 = 生活系统_畝数()
 PRINTFORML 现在共有{LOCAL:3}块可耕种土地（上限{LOCAL:1}块）
 ;消耗（时停折抵 TSP）
 IF FLAG:70 == 0
-	TIME += 900
+	TIME += 480
 	;不超过午夜，避免跨日触发清晨结算（延迟DOWNBASE消耗入账/睡眠处理）
 	SIF TIME > 1440
 		TIME = 1440
 ELSE
-	BASE:MASTER:TSP -= 900 * 3
+	BASE:MASTER:TSP -= 480 * 3
 ENDIF
 ;体力/气力扣除（内联重算消耗值，避免 LOCAL:0 被 ASK_YN 等调用覆盖导致异常扣除）
-BASE:MASTER:体力 -= 2000 * (100 - TALENT:MASTER:耕种Lv * 10) / 100
-BASE:MASTER:気力 -= 2000 * (100 - TALENT:MASTER:耕种Lv * 10) / 100
+BASE:MASTER:体力 -= 800 * (100 - TALENT:MASTER:耕种Lv * 10) / 100
+BASE:MASTER:気力 -= 800 * (100 - TALENT:MASTER:耕种Lv * 10) / 100
 RETURN 1
 
 ;-------------------------------------------------
