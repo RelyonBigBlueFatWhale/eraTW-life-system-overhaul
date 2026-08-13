@@ -1,4 +1,4 @@
-;种族相关的硬编码函数
+﻿;种族相关的硬编码函数
 ;但一改动编码，请检查所有判定函数
 ;-------------------------------------------------
 ;函数名:GET_TALENTNAME
@@ -20,7 +20,7 @@
 #DIM DYNAMIC ARG_ALL_GET
 #DIMS DYNAMIC ARG_SW ;SPLIT WORD
 #DIM DYNAMIC CNT
-#DIM DYNAMIC C_ABILITY_MAX,64
+#DIM DYNAMIC C_ABILITY_MAX,600	;生活系统大修：耕种Lv注册于500号（连续声明域），容量需覆盖
 #DIMS DYNAMIC L_TNAME
 #DIMS DYNAMIC L_TVALUE
 #DIMS DYNAMIC L_SPLITSTR , 20
@@ -135,7 +135,7 @@ SELECTCASE ARG
 			L_TNAME += @"%ARG_SW%%TALENT_TR(ARG)%{CNT}"
 		NEXT
 	;耕种Lv(生活系统大修)
-	CASE 58
+	CASE 500
 		L_TVALUE = 0
 		FOR CNT , 1 , C_ABILITY_MAX:ARG + 1
 			L_TVALUE += @"%ARG_SW%{CNT}"
@@ -146,19 +146,19 @@ SELECTCASE ARG
 			L_TNAME += @"%ARG_SW%%TALENT_TR(ARG)%{CNT}"
 		NEXT
 	;催熟（生活系统大修：耕种天赋，0/1二值）
-	CASE 63
+	CASE 501
 		L_TVALUE = 0%ARG_SW%1
 		L_TNAME = %ARG_SW%%TALENT_TR(ARG)%
 	;丰收（生活系统大修：耕种天赋，0/1二值）
-	CASE 64
+	CASE 502
 		L_TVALUE = 0%ARG_SW%1
 		L_TNAME = %ARG_SW%%TALENT_TR(ARG)%
 	;沃土（生活系统大修：耕种天赋，0/1二值）
-	CASE 65
+	CASE 503
 		L_TVALUE = 0%ARG_SW%1
 		L_TNAME = %ARG_SW%%TALENT_TR(ARG)%
 	;双收（生活系统大修：耕种天赋，0/1二值）
-	CASE 66
+	CASE 504
 		L_TVALUE = 0%ARG_SW%1
 		L_TNAME = %ARG_SW%%TALENT_TR(ARG)%
 	;污臭耐性

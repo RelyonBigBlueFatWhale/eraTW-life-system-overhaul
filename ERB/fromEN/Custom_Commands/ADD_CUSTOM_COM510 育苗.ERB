@@ -6,7 +6,7 @@
 ;流程：放入成材 → 等待（分钟制，槽位占用）→ 收获种子
 ;设施等级：Lv1=1槽/100%时间 Lv2=2槽/90% Lv3=3槽/80%
 ;-------------------------------------------------
-@COM471
+@ADD_CUSTOM_COM510
 #LOCALSIZE 3
 #LOCALSSIZE 1
 
@@ -362,7 +362,7 @@ ENDSELECT
 ITEM:(LOCAL:1) += LOCAL:0
 ;生活系统大修：耕种经验（育苗成功按种子等级获得，由子系统开关控制）
 IF 生活系统_种地
-	EXP:MASTER:耕种経験 += LOCAL:2 * 2
+	EXP:MASTER:耕种经验 += LOCAL:2 * 2
 	PRINTFORML 获得了{LOCAL:2 * 2}点耕种经验！
 ENDIF
 ;生活系统大修·种地：标记今日育苗获得的模组苗（当晚结算时解锁花屋出售并发放酬金）
@@ -591,15 +591,12 @@ ENDIF
 ;-------------------------------------------------
 ;実行判定
 ;-------------------------------------------------
-@COM_ABLE471
+@ADD_CUSTOM_COM_ABLE510
 #LOCALSIZE 1
 #LOCALSSIZE 1
 ;生活系统大修 - 种地系统开关
 SIF !生活系统_种地
 	RETURN 0
-;一括管理
-SIF GLOBAL_COMABLE(471)
-	RETURN RESULT
 ;育苗设施（家具908）
 SIF ITEM:908 < 1
 	RETURN 0
@@ -613,7 +610,7 @@ SIF CFLAG:诶嘿嘿 == 2
 	RETURN 0
 RETURN 1
 
-@COM471_TAGS
+@ADD_CUSTOM_COM510_TAGS
 #LOCALSIZE 1
 #LOCALSSIZE 1
 #FUNCTION

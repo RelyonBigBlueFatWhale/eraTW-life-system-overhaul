@@ -542,6 +542,12 @@ SELECTCASE DISH_NUM
 		DISH_TASTE = 洋食/汁物/獣肉/大麦/野菜/丰盛/濃厚/冬物/質素/家庭的/
 		DISH_COMMENT = 放入大量牛肉、大麦与蔬菜炖煮而成的汤品。分量十足、令人满足。
 
+	CASE 187	;生活系统大修：咸蛋白米粥（轻食，材料只限咸鸭蛋）
+		DISH_NAME = 咸蛋白米粥
+		CALL 材料設定("咸鸭蛋")
+		DISH_TASTE = 米/咸/营养/温暖/家庭的/简易/
+		DISH_COMMENT = 用咸鸭蛋和精米熬成的家常白米粥。咸蛋黄融化在粥里，暖胃又下饭。
+
 	CASE 190
 		DISH_NAME = 烤味噌
 		CALL 材料設定("汎用")
@@ -810,12 +816,6 @@ SELECTCASE DISH_NUM
 		CALL 材料設定("來歷不明的肉")
 		DISH_TASTE = 中華/蘑菇/汁物/香料/咸/濃厚/温暖/温暖/野趣/黏稠/薬効/
 		DISH_COMMENT = 蛇羹。浓稠的蛇肉羹汤。据说秋季食用可保整个冬季不患风寒。
-
-	CASE 187	;生活系统大修：咸蛋白米粥（轻食，材料只限咸鸭蛋）
-		DISH_NAME = 咸蛋白米粥
-		CALL 材料設定("咸鸭蛋")
-		DISH_TASTE = 米/咸/营养/温暖/家庭的/简易/
-		DISH_COMMENT = 用咸鸭蛋和精米熬成的家常白米粥。咸蛋黄融化在粥里，暖胃又下饭。
 
 	CASE 261
 		DISH_NAME = 披萨

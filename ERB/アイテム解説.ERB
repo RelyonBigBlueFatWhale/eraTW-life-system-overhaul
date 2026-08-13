@@ -1,4 +1,4 @@
-;道具の说明文
+﻿;道具の说明文
 @ITEM_DESCRIPTION(ARG)
 #LOCALSIZE 1
 #LOCALSSIZE 1
@@ -403,6 +403,16 @@ SELECTCASE ARG
 		ELSE
 			RETURNF "经过精心碾磨至极细的米，每粒仅留下核心的一小部分。用于酿造最昂贵的清酒"
 		ENDIF
+	CASE 713
+		RETURNF "传说中龙的蛋，散发着深沉的光辉。据说需要漫长的岁月才能孵化……"
+	CASE 714
+		RETURNF "鸭子产下的蛋。可以与平价食材调合成待腌制的咸鸭蛋"
+	CASE 715
+		RETURNF "正在腌制中的咸鸭蛋。放入酒虫的清酒瓶中腌制14天就会变成咸鸭蛋"
+	CASE 716
+		RETURNF "腌制的恰到好处的咸鸭蛋，空口吃也不会很咸，少量回复体力与气力"
+	CASE 717
+		RETURNF "咸香的茶叶蛋，卤过之后可以保存很久，少量回复体力与气力"
 	CASE 721
 		RETURNF "由各种蘑菇调合后的成品，使用后会大幅增强使用者身体机能，当然副作用也极其明显…"
 	CASE 706
@@ -459,6 +469,8 @@ SELECTCASE ARG
 		RETURNF "删除飞跃时间的难以理解的能力　尽管会消耗大量TSP但是效果极佳"
 	CASE 497
 		RETURNF "一种在女儿节使用的、外观可爱的雏人形。人们常将厄运寄托其中，顺水漂流。\n　　或许与雏有关……"
+	CASE 908
+	CASE 909
 	CASE 920
 		;Addition custom code, Sky-Blue Magatama.
 		RETURNF "在水中或缺氧环境中也能维持呼吸的勾玉"
@@ -474,29 +486,6 @@ SELECTCASE ARG
 	CASE 924
 		;Addition custom code, Hyper Ovulation Drug.
 		RETURNF "能让少女即使怀孕也能永远保持受孕状态的药物。对卵生体质无效"
-	;生活系统大修：新物品说明
-	CASE 713
-		RETURNF "传说中龙的蛋，散发着深沉的光辉。据说需要漫长的岁月才能孵化……"
-	CASE 714
-		RETURNF "鸭子产下的蛋。可以与平价食材调合成待腌制的咸鸭蛋"
-	CASE 715
-		RETURNF "正在腌制中的咸鸭蛋。放入酒虫的清酒瓶中腌制14天就会变成咸鸭蛋"
-	CASE 716
-		RETURNF "腌制的恰到好处的咸鸭蛋，空口吃也不会很咸，少量回复体力与气力"
-	CASE 717
-		RETURNF "咸香的茶叶蛋，卤过之后可以保存很久，少量回复体力与气力"
-	CASE 909
-		RETURNF "大型的温室大棚。放置于家庭菜园后，作物不再受季节限制"
-	CASE 910
-		RETURNF "从隙间取来的耕地。持有后家庭菜园的耕地上限提升至240块"
-	CASE 911
-		RETURNF "鸡舍的扩建材料。使用后可提升饲育小屋的数量（松木制）"
-	CASE 912
-		RETURNF "用来孵化蛋类的装置。可以孵化卵、奇妙な卵、鸭蛋，甚至龙蛋……（枫木制）"
-	CASE 913
-		RETURNF "会自动抚摸饲育生物的高价装置。每天都会提升好感度（桦木制）"
-	CASE 914
-		RETURNF "用橡木制成的酿酒桶。每拥有一个，在「察看酒虫的情况」里就能使用一个独立完成酿酒工作的酒桶（最多5个）"
 	CASE 986
 		RETURNF "最高级的清酒，是你酿酒生涯的巅峰。「纯米」意味着不添加任何添加物，「大吟酿」意味着米被碾磨到原重的50%以下。细细品味吧，这是你应得的"
 	CASE 987
@@ -522,4 +511,3 @@ L_STR '= MAIL_ORDER_DESCRIPTION(ARG,1)
 SIF STRLENS(L_STR)
 		RETURNF L_STR
 RETURNF "??????"
-

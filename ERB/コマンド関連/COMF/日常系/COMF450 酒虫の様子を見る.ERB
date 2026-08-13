@@ -1,4 +1,4 @@
-;-------------------------------------------------
+﻿;-------------------------------------------------
 ;COM450 察看酒虫的情况
 ;-------------------------------------------------
 ;日常系命令，等级1
@@ -32,30 +32,23 @@
 ;-------------------------------------------------
 
 @COM450
-#LOCALSIZE 3
+#LOCALSIZE 1
 #LOCALSSIZE 1
 #DIM DYNAMIC 醸造量                          ;取出时获得的酒数量
 #DIM DYNAMIC 酒ID                            ;当前瓶中酒的ID
 #DIM DYNAMIC CAN_ADD_ITEMS                   ;（未使用）
 VARSET LOCAL
 
-;获取当前酒的ID和取出数量
-酒ID = ALC_ID()
-醸造量 = GETMETH_INT(0, "酒データ", 酒ID, "醸造数")
-
-;显示酿造指南（需要酒造家天赋）
-CALL BREWING_GUIDE
-
-;生活系统大修·酿酒：翻页式酒桶界面（默认酒桶0=原版酒虫，可翻页切换酒桶1～5）
+;生活系统大修·酿酒：翻页式酒桶界面（开关开启时直接进入，酒桶0=原版酒虫；原版逻辑不执行）
 IF 生活系统_酿酒
 	CALL 酒桶_操作(0)
 	RETURN -1
 ENDIF
 
-;原版酒虫界面（开关未开启时使用，酒虫即酒桶0）
-PRINTFORML %CALLNAME:MASTER%往放着酒虫的瓶子里窥去
-PRINTFORML 瓶里装满了%VAR_FERMENT%…
-DRAWLINE
+;获取当前酒的ID和取出数量
+酒ID = ALC_ID()
+醸造量 = GETMETH_INT(0, "酒データ", 酒ID, "醸造数")
+
 ;检查替换用水的可用性
 LOCALS '= @"替换成%VAR_WATER%了"
 LOCAL = 1
@@ -63,6 +56,17 @@ IF VAR_WATER == ""
 	LOCALS '= "没有带着可以替换的水"
 	LOCAL = 0
 ENDIF
+
+;显示酿造指南（需要酒造家天赋）
+CALL BREWING_GUIDE
+
+;显示瓶中状态
+PRINTFORML %CALLNAME:MASTER%往放着酒虫的瓶子里窥去
+PRINTFORML 瓶里装满了%VAR_FERMENT%…
+DRAWLINE
+
+;检查当前酒是否有可添加物（决定菜单选项是否显示）
+CAN_ADD_ITEMS = GETMETH_STR(0, "酒データ", ALC_ID(VAR_FERMENT), "ADDITIONS") != ""
 {
 CALL ASK_M("什么也不做",1,LOCALS, LOCAL,"添加物品",1,
 "操纵时间造酒（消费TSP2400）",BASE:MASTER:8 >= 2400,"『绯红之王』！（消费TSP4000&绯红之王）", BASE:MASTER:8 >= 4000 && ITEM:绯红之王 && GETMETH_STR(0, "酒データ", ALC_ID(VAR_FERMENT), "変化先") != "0")

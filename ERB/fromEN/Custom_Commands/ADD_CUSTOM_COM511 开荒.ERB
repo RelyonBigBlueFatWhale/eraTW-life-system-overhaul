@@ -5,7 +5,7 @@
 ;在家庭菜园开垦新耕地（荒地），消耗大量时间/体力/气力
 ;耕种Lv 每级减少 10% 消耗；菜园上限 8 块（隙间耕地 910 时 240）
 ;-------------------------------------------------
-@COM472
+@ADD_CUSTOM_COM511
 #LOCALSIZE 3
 #LOCALSSIZE 1
 
@@ -46,7 +46,7 @@ ENDIF
 ;执行
 生活系统_开荒日期 = DAY:0    ;记录当日已开荒（每日限一次）
 生活系统_开荒数 ++
-EXP:MASTER:耕种経験 += 2
+EXP:MASTER:耕种经验 += 2
 PRINTFORML 挥动锄头，开垦出了一片新的耕地！获得了2点耕种经验！
 PRINTFORML 现在共有{生活系统_畝数()}块可耕种土地（上限{LOCAL:1}块）
 ;消耗（时停折抵 TSP）
@@ -65,15 +65,12 @@ RETURN 1
 ;-------------------------------------------------
 ;実行判定
 ;-------------------------------------------------
-@COM_ABLE472
+@ADD_CUSTOM_COM_ABLE511
 #LOCALSIZE 1
 #LOCALSSIZE 1
 ;生活系统大修 - 种地系统开关
 SIF !生活系统_种地
 	RETURN 0
-;一括管理
-SIF GLOBAL_COMABLE(472)
-	RETURN RESULT
 ;必须在可进行家庭菜园的场所
 SIF !家庭菜園可(CFLAG:MASTER:現在位置) && !IS_GAP_GUEST(MASTER)
 	RETURN 0
@@ -90,7 +87,7 @@ SIF CFLAG:诶嘿嘿 == 2
 	RETURN 0
 RETURN 1
 
-@COM472_TAGS
+@ADD_CUSTOM_COM511_TAGS
 #LOCALSIZE 1
 #LOCALSSIZE 1
 #FUNCTION

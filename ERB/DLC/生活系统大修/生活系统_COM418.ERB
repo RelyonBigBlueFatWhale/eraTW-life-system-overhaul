@@ -466,7 +466,7 @@ RETURNF 畝尺寸
 			ITEM:(生活系统_苗対応作物番号取得(PLANT_TYPE:ARG)) += LOCAL
 			;生活系统大修：耕种经验（收获时获得 = 收获个数 × 植株等级；未登记等级保底1点，由子系统开关控制）
 			IF 生活系统_种地
-				EXP:MASTER:耕种経験 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
+				EXP:MASTER:耕种经验 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
 				PRINTFORML 获得了{LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)}点耕种经验！
 			ENDIF
 			行動コスト += 20
@@ -476,7 +476,7 @@ RETURNF 畝尺寸
 		ITEM:(生活系统_苗対応作物番号取得(PLANT_TYPE:ARG)) += LOCAL
 		;生活系统大修：耕种经验（收获时获得 = 收获个数 × 植株等级；未登记等级保底1点，由子系统开关控制）
 		IF 生活系统_种地
-			EXP:MASTER:耕种経験 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
+			EXP:MASTER:耕种经验 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
 			PRINTFORML 获得了{LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)}点耕种经验！
 		ENDIF
 		PLANT_TYPE:ARG = 0
@@ -539,7 +539,7 @@ RETURNF 畝尺寸
 	ITEM:(生活系统_苗対応作物番号取得(PLANT_TYPE:ARG)) += LOCAL
 	;生活系统大修：耕种经验（收获时获得 = 收获个数 × 植株等级；未登记等级如跳蛋苗等保底1点，由子系统开关控制）
 	IF 生活系统_种地
-		EXP:MASTER:耕种経験 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
+		EXP:MASTER:耕种经验 += LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)
 		PRINTFORML 获得了{LOCAL * MAX(生活系统_植株等级(PLANT_TYPE:ARG), 1)}点耕种经验！
 	ENDIF
 	PLANT_TYPE:ARG = 0

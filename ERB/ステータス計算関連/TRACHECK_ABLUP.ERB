@@ -75,10 +75,10 @@ IF TALENT:ARG:採集Lv < 6 + 4* MAGIC_DLC_等级重置
 		CALL KOJO_MESSAGE_SEND("EVENT", 34, ARG, 6)
 	ENDIF
 ENDIF
-;生活系统大修：耕种Lv（收获作物获得耕种経験，由子系统开关控制）
+;生活系统大修：耕种Lv（收获作物获得耕种经验，由子系统开关控制）
 IF 生活系统_种地 && TALENT:ARG:耕种Lv < 6 + 4* MAGIC_DLC_等级重置
 	NEED_EXP = CALC_ABL_DEMAND(58, EXPLV:(TALENT:ARG:耕种Lv + 3 - TALENT278_ADJUST))
-	IF EXP:ARG:耕种経験 > NEED_EXP || (EXP:ARG:耕种経験 > 5 + 4* MAGIC_DLC_等级重置 && TALENT:ARG:耕种Lv == 0)
+	IF EXP:ARG:耕种经验 > NEED_EXP || (EXP:ARG:耕种经验 > 5 + 4* MAGIC_DLC_等级重置 && TALENT:ARG:耕种Lv == 0)
 		TALENT:ARG:耕种Lv ++
 		PRINTFORMW %CALLNAME:ARG%的耕种Lv变成了LV{TALENT:ARG:耕种Lv}
 		;技能レベルUP口上,11,耕种Lv

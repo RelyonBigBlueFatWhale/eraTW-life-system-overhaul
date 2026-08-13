@@ -62,7 +62,7 @@
 #DIM CONST TALENT_釣りLv = 47
 #DIM CONST TALENT_採集Lv = 48
 #DIM CONST TALENT_調合Lv = 49
-#DIM CONST TALENT_耕种Lv = 58	;生活系统大修：耕种技能等级（收获作物获得经验）
+#DIM CONST TALENT_耕种Lv = 500	;生活系统大修：耕种技能等级（收获作物获得经验）
 #DIM CONST TALENT_習得速度 = 50
 #DIM CONST TALENT_器用な指 = 51
 #DIM CONST TALENT_舌使い = 52

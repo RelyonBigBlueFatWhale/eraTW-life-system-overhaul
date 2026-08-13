@@ -1,4 +1,4 @@
-;//////////////////////////////////////////////////////////////
+﻿;//////////////////////////////////////////////////////////////
 ;
 ;List of functions for translating certain strings that can't be touched directly
 ;
@@ -656,7 +656,7 @@ ENDIF
 #DIM 表示項目数
 CALL PRINTBUTTON_EX("Experience",163,TFLAG:163, , , 1)
 表示項目数 = 0
-;生活系统大修：耕种経験(139)超出原版100上限，DLC开启时遍历全部EXP（关闭时保持原版范围）
+;生活系统大修：耕种经验(88)超出原版100上限，DLC开启时遍历全部EXP（关闭时保持原版范围）
 LOCAL:2 = 100
 SIF 生活系统_种地
 	LOCAL:2 = VARSIZE("EXP")
@@ -689,7 +689,7 @@ IF !TFLAG:経験表示
 		;	SETCOLOR C_YELLOW
 		PRINTFORM %LOCALS% 
 		;生活系统大修：耕种经验进度条（当前值/升级需求，仅DLC开启）
-		IF LOCAL == 139 && 生活系统_种地
+		IF LOCAL == 88 && 生活系统_种地
 			LOCAL:3 = TALENT:選択中キャラID:耕种Lv
 			LOCAL:4 = 0
 			SIF 悟性系统开关 == 1
@@ -697,9 +697,9 @@ IF !TFLAG:経験表示
 			LOCAL:5 = CALC_ABL_DEMAND(58, EXPLV:(LOCAL:3 + 3 - LOCAL:4))
 			LOCAL:6 = 0
 			SIF LOCAL:5 > 0
-				LOCAL:6 = MIN(5, EXP:選択中キャラID:139 * 5 / LOCAL:5)
+				LOCAL:6 = MIN(5, EXP:選択中キャラID:88 * 5 / LOCAL:5)
 			LOCAL:7 = 5 - LOCAL:6
-			PRINTFORM （{EXP:選択中キャラID:139}/{LOCAL:5}）【%"■" * LOCAL:6%%"□" * LOCAL:7%】
+			PRINTFORM （{EXP:選択中キャラID:88}/{LOCAL:5}）【%"■" * LOCAL:6%%"□" * LOCAL:7%】
 		ENDIF
 		RESETCOLOR
 		SIF (++表示項目数) % 4 == 0 

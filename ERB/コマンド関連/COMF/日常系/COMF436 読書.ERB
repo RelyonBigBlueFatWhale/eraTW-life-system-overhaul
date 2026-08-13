@@ -196,7 +196,7 @@ SELECTCASE TFLAG:193
 		EXP:MASTER:学習経験 += READING_EXP
 	CASE 5
 	;実用
-		SELECTCASE RAND:8
+		SELECTCASE RAND:7
 			CASE 0
 				EXP:MASTER:会話経験 += READING_EXP
 				SIF TARGET > 0 && MAGIC_DLC_等级重置
@@ -222,12 +222,16 @@ SELECTCASE TFLAG:193
 				SIF TARGET > 0 && MAGIC_DLC_等级重置
 					EXP:TARGET:調合経験 += READING_EXP
 			CASE 6
-				;生活系统大修：耕种（由子系统开关控制）
+				;生活系统大修·种地：随机差分不改动原版 RAND:7 分布——此分支在 DLC 关闭时恢复原版伐採行为，不产生空效果
 				IF 生活系统_种地
-					EXP:MASTER:耕种経験 += READING_EXP
+					EXP:MASTER:耕种经验 += READING_EXP
 					PRINTFORML 获得了{READING_EXP}点耕种经验！
 					SIF TARGET > 0 && MAGIC_DLC_等级重置
-						EXP:TARGET:耕种経験 += READING_EXP
+						EXP:TARGET:耕种经验 += READING_EXP
+				ELSE
+					EXP:MASTER:伐採経験 += READING_EXP
+					SIF TARGET > 0 && MAGIC_DLC_等级重置
+						EXP:TARGET:伐採経験 += READING_EXP
 				ENDIF
 			CASEELSE
 				EXP:MASTER:伐採経験 += READING_EXP
