@@ -5,9 +5,11 @@
 ; 入口：DLC设置 → [69] 生活系统大修（OPTIONPRINT.ERB 的 C_List:69，
 ;       DLCCHIOSEMENU.ERB 的 @GETINFO_DLC CASE 69 调用本文件 @生活系统_主菜单）
 ;
-; 包含：
-;   @生活系统_主菜单       子系统主菜单（养鸡/种地/酿酒/钓鱼启停）
-;   @生活系统_子系统菜单   单个子系统的开关与说明
+; 交互设计（v2.0 重制）：
+;   - 单层菜单：四个子系统开关直接在主菜单切换，不再进入子菜单
+;   - [0] 统一为"返回"（与全游戏习惯一致，避免误触）
+;   - 「全部关闭」为危险操作：移至 [7] 且必须二次确认，不触发 RESTART
+;     （开关判定实时生效，无需重启；原版误触 [0] 会关闭全部并重启导致当日进度丢失）
 ;========================================================
 
 ;--------------------------------------------------------
@@ -30,9 +32,10 @@ ENDIF
 SIF 生活系统_种地 || 生活系统_养鸡 || 生活系统_酿酒 || 生活系统_钓鱼
 	ADD_CUSTOM_COM_SWITCH = 1
 $LIFE_MENU
-PRINTFORML 生活系统大修 · 主菜单
+PRINTFORML 生活系统大修 · 设置
 PRINTFORML 对养鸡/种地/酿酒/钓鱼生活玩法的强化，各子系统独立启停
-PRINTL
+DRAWLINE
+;子系统开关（[1]~[4] 直接切换，状态即时生效）
 SIF 生活系统_养鸡
 	SETCOLOR 0x00FF00
 PRINTFORML [1] 养鸡系统　　\@ 生活系统_养鸡 ? [已生效] # [未启动] \@
@@ -49,112 +52,72 @@ SIF 生活系统_钓鱼
 	SETCOLOR 0x00FF00
 PRINTFORML [4] 钓鱼系统　　\@ 生活系统_钓鱼 ? [已生效] # [未启动] \@
 RESETCOLOR
-PRINTL
-PRINTFORML ※ 咸鸭蛋产业链（鸭蛋→调合→腌制→咸鸭蛋）需要「养鸡系统」与「酿酒系统」同时开启
-PRINTL
-PRINTFORML [0] 一键关闭所有子系统　[99] 返回
+DRAWLINE
+PRINTFORML [5] 钓鱼难度　　\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
+PRINTFORML [6] 玩法说明
+DRAWLINE
+PRINTFORML [7] 全部关闭　（需确认）
+PRINTFORML [0] 返回
 INPUT
 SELECTCASE RESULT
-	CASE 0
-		;一键关闭所有子系统
-		生活系统_养鸡 = 0
-		生活系统_种地 = 0
-		生活系统_酿酒 = 0
-		生活系统_钓鱼 = 0
-		PRINTFORMW 已关闭所有生活系统子系统
-		RESTART
 	CASE 1 TO 4
-		CALL 生活系统_子系统菜单(RESULT)
-		CLEARLINE LINECOUNT - LOCAL
-		GOTO LIFE_MENU
-	CASE 99
-		RETURN
-	CASEELSE
-		CLEARLINE LINECOUNT - LOCAL
-		GOTO LIFE_MENU
-ENDSELECT
-
-;--------------------------------------------------------
-; 子系统设置子菜单
-; ARG: 1=养鸡 2=种地 3=酿酒 4=钓鱼
-;--------------------------------------------------------
-@生活系统_子系统菜单(ARG)
-#LOCALSIZE 2
-#LOCALSSIZE 2
-;LOCAL:1 = 进入时行数（用于 CLEARLINE）
-LOCAL:1 = LINECOUNT
-SELECTCASE ARG
-	CASE 1
-		LOCAL = 生活系统_养鸡
-		LOCALS = 养鸡系统
-		LOCALS:1 = 强化鸡舍养殖玩法：收蛋、饲料、亲密度、孵化器、自动抚摸机等。※ 咸鸭蛋产业链（鸭蛋→调合→腌制）需要与「酿酒系统」同时开启
-	CASE 2
-		LOCAL = 生活系统_种地
-		LOCALS = 种地系统
-		LOCALS:1 = 新增「育苗」指令：在菜园旁消耗采集素材育成种子，种子可在家庭菜园种植。越是珍贵的作物收成越稀少，成熟期的收成格外丰厚；浆果与菌菇类收获后还能再收一茬
-	CASE 3
-		LOCAL = 生活系统_酿酒
-		LOCALS = 酿酒系统
-		LOCALS:1 = 酿酒玩法扩展：橡木酒桶（酒桶0=原版酒虫，酒桶1～5由家具屋打造，每个独立酿酒）。※ 咸鸭蛋腌制（清酒中添加待腌制的咸鸭蛋）需要与「养鸡系统」同时开启
-	CASE 4
-		LOCAL = 生活系统_钓鱼
-		LOCALS = 钓鱼系统
-		LOCALS:1 = 以钓鱼小游戏取代原本的钓鱼判定：浮漂下沉时提竿，拉锯战中选对方向与鱼角力，在它挣脱之前拉上来
-	CASEELSE
-		RETURN
-ENDSELECT
-$LIFE_SUB_MENU
-PRINTFORML 【%LOCALS%】　\@ LOCAL ? [已生效] # [未启动] \@
-PRINTFORML %LOCALS:1%
-SIF ARG == 2
-	PRINTFORML 提示：先去图书馆寻找一下耕种的基础教程再开始尝试种地会比较好
-PRINTL
-PRINTFORML [0] \@ LOCAL ? 关闭本子系统 # 启动本子系统 \@
-SIF ARG == 4
-	PRINTFORML [2] 难度：\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
-SIF ARG == 4
-	PRINTFORML [3] 钓鱼小游戏玩法说明
-PRINTFORML [9] 返回主菜单
-INPUT
-SELECTCASE RESULT
-	CASE 0
-		SELECTCASE ARG
+		;直接切换对应子系统开关
+		SELECTCASE RESULT
 			CASE 1
 				生活系统_养鸡 = !生活系统_养鸡
+				PRINTFORMW 养鸡系统已\@ 生活系统_养鸡 ? 启动 # 关闭 \@
 			CASE 2
 				生活系统_种地 = !生活系统_种地
+				PRINTFORMW 种地系统已\@ 生活系统_种地 ? 启动 # 关闭 \@
 			CASE 3
 				生活系统_酿酒 = !生活系统_酿酒
+				PRINTFORMW 酿酒系统已\@ 生活系统_酿酒 ? 启动 # 关闭 \@
 			CASE 4
 				生活系统_钓鱼 = !生活系统_钓鱼
+				PRINTFORMW 钓鱼系统已\@ 生活系统_钓鱼 ? 启动 # 关闭 \@
 		ENDSELECT
-		LOCAL = !LOCAL
-		PRINTFORMW %LOCALS%已\@ LOCAL ? 启动 # 关闭 \@
-		CLEARLINE LINECOUNT - LOCAL:1
-		GOTO LIFE_SUB_MENU
-	CASE 2
-		;难度切换（仅钓鱼）
-		IF ARG == 4
-			生活系统_钓鱼_难度 = !生活系统_钓鱼_难度
-			PRINTFORMW 钓鱼小游戏难度已切换为\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
+		;任一子系统开启时自动启用自定义指令显示（育苗/开荒入口）
+		SIF 生活系统_种地 || 生活系统_养鸡 || 生活系统_酿酒 || 生活系统_钓鱼
+			ADD_CUSTOM_COM_SWITCH = 1
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 5
+		;钓鱼难度切换
+		生活系统_钓鱼_难度 = !生活系统_钓鱼_难度
+		PRINTFORMW 钓鱼小游戏难度已切换为\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 6
+		;玩法说明（按任意键返回）
+		PRINTL 【养鸡】强化鸡舍养殖：收蛋、饲料、亲密度、孵化器、自动抚摸机
+		PRINTL 【种地】新增「育苗」指令：在菜园旁消耗采集素材育成种子，可种植新作物；浆果与菌菇类收获后还能再收一茬
+		PRINTL 　　　　　提示：先去图书馆寻找一下耕种的基础教程再开始尝试种地会比较好
+		PRINTL 【酿酒】橡木酒桶独立发酵（酒桶0=原版酒虫，1~5由家具屋打造）
+		PRINTL 【钓鱼】小游戏：浮漂下沉时提竿；拉锯时选对方向与鱼角力，在它挣脱之前拉上来
+		PRINTL 　　　　　[默认]时限较短更有挑战，[简单]时限宽松；钓鱼技艺越高反应时间越长
+		PRINTL
+		PRINTL ※ 咸鸭蛋产业链：鸭蛋 → 调合 → 清酒中腌制成熟 → 咸鸭蛋（需「养鸡+酿酒」同时开启）
+		PRINTFORMW 按任意键返回……
+		INPUT
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 7
+		;一键关闭（危险操作：二次确认，不重启游戏——开关判定实时生效）
+		PRINTFORML 确定要关闭全部生活系统子系统吗？
+		CALL ASK_YN, "确认关闭", "再想想"
+		IF RESULT == 0
+			生活系统_养鸡 = 0
+			生活系统_种地 = 0
+			生活系统_酿酒 = 0
+			生活系统_钓鱼 = 0
+			PRINTFORMW 已关闭所有生活系统子系统
+			RETURN
 		ENDIF
-		CLEARLINE LINECOUNT - LOCAL:1
-		GOTO LIFE_SUB_MENU
-	CASE 3
-		;玩法说明（仅钓鱼）
-		IF ARG == 4
-			PRINTL 钓鱼小游戏玩法说明
-			PRINTL 提竿：浮漂下沉后需在倒计时内按[0]提竿，超时脱钩
-			PRINTL 拉锯：鱼会向四个方向之一逃窜，选择与其相反的方向拉竿
-			PRINTL 选对方向扣除鱼体力，选错则鱼恢复体力
-			PRINTL 在鱼挣脱之前耗尽它的体力即为成功
-			PRINTFORMW 钓鱼技艺越高反应时间越长，技艺精湛时正确方向会以黄色高亮
-		ENDIF
-		CLEARLINE LINECOUNT - LOCAL:1
-		GOTO LIFE_SUB_MENU
-	CASE 9
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 0
 		RETURN
 	CASEELSE
-		CLEARLINE LINECOUNT - LOCAL:1
-		GOTO LIFE_SUB_MENU
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
 ENDSELECT
