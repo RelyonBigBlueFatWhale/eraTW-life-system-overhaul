@@ -17,7 +17,7 @@ SIF ITEM:908 < 1
 
 $育苗_主菜单
 行数 = LINECOUNT
-LOCAL:1 = ITEM:908    ;设施等级 1~3（槽位上限）
+LOCAL:1 = MIN(ITEM:908, 3)    ;设施等级 1~3（槽位上限；ITEM:908 可能因旧档转换等原因>3，夹取防数组越界）
 PRINTFORML 【育苗设施】Lv{LOCAL:1}　槽位{已占用槽数()}/{LOCAL:1}　育苗时间{100 - (LOCAL:1 - 1) * 10}％
 ;逐槽显示
 FOR LOCAL:0, 0, LOCAL:1
@@ -292,7 +292,7 @@ SELECTCASE RESULT
 				LOCAL:1 = 120
 		ENDSELECT
 		SIF ITEM:908 > 1
-			LOCAL:1 = LOCAL:1 * (100 - (ITEM:908 - 1) * 10) / 100
+			LOCAL:1 = LOCAL:1 * (100 - (MIN(ITEM:908, 3) - 1) * 10) / 100
 		DEBUGPRINTFORML [育苗调试]需求分钟={LOCAL:1}
 		;入槽
 		育苗槽:ARG:育苗槽_需求分钟 = LOCAL:1
@@ -564,9 +564,9 @@ SELECTCASE ARG
 	CASEELSE
 		LOCAL = 120
 ENDSELECT
-;设施等级缩短
+;设施等级缩短（等级上限3，ITEM:908 可能因旧档转换等原因>3，夹取防数值错误）
 SIF ITEM:908 > 1
-	LOCAL = LOCAL * (100 - (ITEM:908 - 1) * 10) / 100
+	LOCAL = LOCAL * (100 - (MIN(ITEM:908, 3) - 1) * 10) / 100
 RETURNF LOCAL
 
 ;-------------------------------------------------
