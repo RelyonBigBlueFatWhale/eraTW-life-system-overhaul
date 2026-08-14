@@ -374,6 +374,12 @@ RETURN WORK_TIME
 @EGG_PROGRESS
 #DIM SPAWN_RATE
 #DIM CAGECOUNT
+;生活系统大修·养鸡：开关开启时使用增强版每日结算（饲料箱存量消耗/饲料分档/好感分档/断粮），
+;实现位于 DLC/生活系统大修/生活系统_COM499.ERB；关闭时走下方原版逻辑
+IF 生活系统_养鸡
+	CALL 生活系统_EGG_PROGRESS
+	RETURN
+ENDIF
 
 ;ふんの量に応じて日数減少確率が下がる
 SELECTCASE BIRD_DUNG

@@ -156,6 +156,12 @@ SELECTCASE RESULT
 		RETURN -1
 	CASE 1
 		;取出桶中物，换入携带的水（与原版酒虫设定一致）
+		;生活系统大修：兜底防护——即使无水选项被意外启用，未携带水时也拒绝取出，防止桶内内容物被清空
+		IF VAR_WATER == ""
+			PRINTFORML 没有带着可以替换的水……
+			CLEARLINE LINECOUNT - 行数
+			GOTO 酒桶_LOOP
+		ENDIF
 		PRINTFORML %CALLNAME:MASTER%取出%VAR_FERMENT%后往桶里倒进了%VAR_WATER%
 		;生活系统大修：桶中为"咸鸭蛋"时（清酒+20个待腌制腌成），取出的是腌好的20个咸鸭蛋
 		SIF VAR_FERMENT == "咸鸭蛋"
