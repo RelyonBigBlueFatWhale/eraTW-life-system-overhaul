@@ -1,9 +1,0 @@
-﻿#DIMS CONST nType_Item = "Item"
-#DIMS CONST COND_intimacy = "intimacy"
-#DIMS CONST COND_love = "love"
-#DIMS CONST COND_lust = "lust"
-#DIMS CONST COND_lewd = "lewd"
-#DIMS CONST COND_item = "item"
-
-;生活系统大修：6→12（咸鸭蛋调合配方含11段素材：鸭蛋×10+平价食材×1）
-#DIM CONST QOL_MAX_INGREDIENTS = 24

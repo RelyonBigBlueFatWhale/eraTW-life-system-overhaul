@@ -1,0 +1,300 @@
+﻿;========================================================
+; 生活系统大修 - 隙间渔获（钓鱼2.0）
+; 文件：ERB/DLC/生活系统大修/生活系统_隙间渔获.ERB
+;
+; 目标：把渔获与道具系统解耦——
+;   上鱼时不再直接换算成「鱼/好吃的鱼」，而是把鱼种+个体尺寸存入
+;   隙间渔获（QOL_FISH_INSTANCE 实例表，随存档保存，见 VarExtGameData.csv）；
+;   玩家打开「隙间渔获」查看记录，手动「获取鱼肉」时才转换为道具。
+;
+; 接入点（依赖 develop 钓鱼重构 qol_fish）：
+;   @QOL_FISH_DELIVER_HOOK —— QOL_FISH_DELIVER_CATCH 的 mod 劫持点：
+;   RETURN 1 = 接管渔获（鱼进入隙间）；RETURN 0 = 走默认交付（直给道具）。
+;   仅当 生活系统_钓鱼 开启时才接管；关闭时与上游行为完全一致。
+;
+; 隙间容量：基础30 + 扩容次数（上限90）；
+;   扩容消耗「收藏隙間」（ITEM:400）×10 → 容量+1。
+;========================================================
+
+;--------------------------------------------------------
+; 隙间容量计算：30 + 扩容次数（上限90）
+;--------------------------------------------------------
+@生活系统_隙间容量()
+#FUNCTION
+#LOCALSIZE 1
+#LOCALSSIZE 1
+RETURNF MIN(隙间基础容量 + 生活系统_隙间扩容次数, 隙间容量上限)
+
+;--------------------------------------------------------
+; mod 劫持点：捕获交付（QOL_FISH_DELIVER_CATCH 调用）
+; ARG   = 鱼种 ID（QOL_FISH_DB.fish_id）
+; ARG:1 = 个体尺寸 cm（捕获时已固定，禁止重滚）
+; 返回：1=已接管（鱼进入隙间） / 0=未接管（走默认交付）
+;--------------------------------------------------------
+@QOL_FISH_DELIVER_HOOK(ARG, ARG:1)
+#LOCALSIZE 2
+#LOCALSSIZE 1
+;仅钓鱼系统开启时接管（关闭时与上游一致：直给道具）
+SIF !生活系统_钓鱼
+        RETURN 0
+;隙间已满：不接管，默认交付直给道具，并提示
+IF QOL_FISH_INSTANCE_COUNT() >= 生活系统_隙间容量()
+        SETCOLOR C_GRAY
+        PRINTFORML 隙间渔获已经装得满满当当了……这条%QOL_FISH_GET_NAME(ARG)%只能就地取肉了
+        RESETCOLOR
+        RETURN 0
+ENDIF
+;写入实例表（source=catch，created_day=DAY）
+LOCAL = QOL_FISH_INSTANCE_ADD(ARG, ARG:1)
+;捕获播报（沉浸式：不展示内部数值，尺寸为观感信息）
+SETCOLOR C_YELLOW
+PRINTFORML 一尾体长{ARG:1}厘米的%QOL_FISH_GET_NAME(ARG)%被收进了隙间渔获（{QOL_FISH_INSTANCE_COUNT()}/{生活系统_隙间容量()}）
+RESETCOLOR
+RETURN 1
+
+;--------------------------------------------------------
+; 隙间渔获主界面（自定义指令512 与 主菜单[8] 共用）
+;--------------------------------------------------------
+@生活系统_隙间渔获界面
+#LOCALSIZE 7
+#LOCALSSIZE 1
+#DIM L_UIDS, 100
+#DIM L_SPECIES, 41    ;按鱼种ID(1~40)索引：1=本档有渔获
+#DIM L_CNT, 41        ;各鱼种数量
+#DIM L_MAX, 41        ;各鱼种最大尺寸
+#DIM L_SUM, 41        ;各鱼种尺寸合计（算平均）
+#DIM L_IDX, 41        ;显示序号→鱼种ID 映射
+;仅钓鱼系统开启时可用
+SIF !生活系统_钓鱼
+        PRINTFORMW 隙间渔获是钓鱼系统的附属空间……先开启钓鱼系统再来吧
+        RETURN -1
+$隙间_主菜单
+LOCAL:0 = LINECOUNT
+;聚合统计
+VARSET L_SPECIES, 0
+VARSET L_CNT, 0
+VARSET L_MAX, 0
+VARSET L_SUM, 0
+VARSET L_IDX, 0
+LOCAL:1 = QOL_FISH_INSTANCE_LIST(L_UIDS)
+LOCAL:5 = 0
+FOR LOCAL:2, 0, LOCAL:1
+        IF QOL_FISH_INSTANCE_GET(L_UIDS:(LOCAL:2))
+                LOCAL:3 = RESULT:0        ;鱼种ID
+                LOCAL:4 = RESULT:1        ;尺寸
+                IF L_SPECIES:(LOCAL:3) == 0
+                        L_SPECIES:(LOCAL:3) = 1
+                        LOCAL:5 ++
+                        L_IDX:(LOCAL:5) = LOCAL:3
+                ENDIF
+                L_CNT:(LOCAL:3) ++
+                L_MAX:(LOCAL:3) = MAX(L_MAX:(LOCAL:3), LOCAL:4)
+                L_SUM:(LOCAL:3) += LOCAL:4
+        ENDIF
+NEXT
+PRINTFORML 【隙间渔获】收纳{QOL_FISH_INSTANCE_COUNT()}/{生活系统_隙间容量()} 尾
+DRAWLINE
+IF LOCAL:5 == 0
+        PRINTL 隙间里空空如也……钓鱼时捕获的鱼会暂存于此
+        PRINTL
+ELSE
+        FOR LOCAL:2, 1, LOCAL:5 + 1
+                LOCAL:3 = L_IDX:(LOCAL:2)
+                PRINTFORML [{LOCAL:2,2}] %QOL_FISH_GET_NAME(LOCAL:3)% ×{L_CNT:(LOCAL:3)}　最大{L_MAX:(LOCAL:3)}cm　平均{L_SUM:(LOCAL:3) / L_CNT:(LOCAL:3)}cm
+        NEXT
+ENDIF
+DRAWLINE
+PRINTL [8] 扩容隙间（收藏隙間×10 → 容量+1）
+PRINTL [0] 返回
+$隙间_输入
+INPUT
+SELECTCASE RESULT
+        CASE 0
+                RETURN 1
+        CASE 8
+                CALL 生活系统_隙间扩容
+                CLEARLINE LINECOUNT - LOCAL:0
+                GOTO 隙间_主菜单
+        CASE 1 TO 40
+                ;显示序号→鱼种
+                IF RESULT > LOCAL:5
+                        CLEARLINE 1
+                        GOTO 隙间_输入
+                ENDIF
+                LOCAL:3 = L_IDX:(RESULT)
+                CALL 生活系统_隙间鱼种页(LOCAL:3)
+                CLEARLINE LINECOUNT - LOCAL:0
+                GOTO 隙间_主菜单
+        CASEELSE
+                CLEARLINE 1
+                GOTO 隙间_输入
+ENDSELECT
+RETURN 1
+
+;--------------------------------------------------------
+; 某鱼种的个体页：查看每条鱼（分页），单条取肉 / 该种全部取肉
+; ARG = 鱼种ID
+;--------------------------------------------------------
+@生活系统_隙间鱼种页(ARG)
+#LOCALSIZE 8
+#LOCALSSIZE 1
+#DIM DYNAMIC 当前鱼种
+#DIM DYNAMIC 页偏移
+#DIM L_UIDS, 100
+当前鱼种 = ARG
+页偏移 = 0
+$鱼种页_循环
+LOCAL:0 = LINECOUNT
+;收集该鱼种的全部实例uid
+VARSET L_UIDS, 0
+LOCAL:1 = 0
+LOCAL:2 = QOL_FISH_INSTANCE_LIST(L_UIDS)
+FOR LOCAL:3, 0, LOCAL:2
+        IF QOL_FISH_INSTANCE_GET(L_UIDS:(LOCAL:3))
+                IF RESULT:0 == 当前鱼种
+                        L_UIDS:(LOCAL:1) = L_UIDS:(LOCAL:3)
+                        LOCAL:1 ++
+                ENDIF
+        ENDIF
+NEXT
+PRINTFORML %QOL_FISH_GET_NAME(当前鱼种)%（共{LOCAL:1}尾）
+DRAWLINE
+;分页显示：每页最多20条
+LOCAL:4 = MIN(LOCAL:1, 页偏移 + 20)
+LOCAL:5 = 0
+FOR LOCAL:3, 页偏移, LOCAL:4
+        LOCAL:5 ++
+        IF QOL_FISH_INSTANCE_GET(L_UIDS:(LOCAL:3))
+                LOCAL:6 = RESULT:1   ;尺寸（先取，避免后续调用覆盖 RESULT）
+                LOCAL:7 = DT_CELL_GET(QOL_FISH_INSTANCE, L_UIDS:(LOCAL:3), "created_day", 1)
+                PRINTFORML [{LOCAL:5,2}] 体长{LOCAL:6}cm　（第{LOCAL:7}天捕获）
+        ENDIF
+NEXT
+DRAWLINE
+IF LOCAL:1 > 20 && LOCAL:4 < LOCAL:1
+        PRINTL [9] 下一页
+ENDIF
+PRINTL [7] 获取该种全部鱼肉
+PRINTL [0] 返回
+$鱼种页_输入
+INPUT
+SELECTCASE RESULT
+        CASE 0
+                RETURN 1
+        CASE 7
+                CALL 生活系统_隙间取肉_全部(当前鱼种)
+                RETURN 1
+        CASE 9
+                IF LOCAL:1 > 20 && LOCAL:4 < LOCAL:1
+                        页偏移 += 20
+                        CLEARLINE LINECOUNT - LOCAL:0
+                        GOTO 鱼种页_循环
+                ENDIF
+                CLEARLINE 1
+                GOTO 鱼种页_输入
+        CASE 1 TO 20
+                ;本页第N条 → uid
+                LOCAL:3 = 页偏移 + RESULT - 1
+                IF LOCAL:3 < LOCAL:1
+                        CALL 生活系统_隙间取肉(L_UIDS:(LOCAL:3))
+                ENDIF
+                CLEARLINE LINECOUNT - LOCAL:0
+                GOTO 鱼种页_循环
+        CASEELSE
+                CLEARLINE 1
+                GOTO 鱼种页_输入
+ENDSELECT
+RETURN 1
+
+;--------------------------------------------------------
+; 单条取肉：实例→道具（鱼707/好吃的鱼708），1尾=1道具
+; ARG = 实例uid
+;--------------------------------------------------------
+@生活系统_隙间取肉(ARG)
+#LOCALSIZE 3
+#LOCALSSIZE 1
+#DIM DYNAMIC 目标uid
+#DIM DYNAMIC 取肉道具
+目标uid = ARG
+IF QOL_FISH_INSTANCE_GET(目标uid) == 0
+        PRINTFORML 那条鱼已经不在隙间里了……
+        RETURN 0
+ENDIF
+LOCAL = RESULT:0        ;鱼种ID
+取肉道具 = QOL_FISH_GET_ITEM_ID(LOCAL)
+IF 取肉道具 <= 0
+        PRINTFORML 这尾%QOL_FISH_GET_NAME(LOCAL)%没法取肉……
+        RETURN 0
+ENDIF
+IF ITEM:取肉道具 >= 99
+        PRINTFORML 背包里的\@ 取肉道具 == 707 ? 魚 # 好吃的魚 \@已经装不下了……先整理一下背包吧
+        RETURN 0
+ENDIF
+CALL GET_ITEM(TOSTR(取肉道具), 1, 1)
+LOCAL = QOL_FISH_INSTANCE_REMOVE(目标uid)
+SETCOLOR C_YELLOW
+PRINTFORML 取出了%QOL_FISH_GET_NAME(LOCAL)%的鱼肉，得到了「\@ 取肉道具 == 707 ? 魚 # 好吃的魚 \@」×1
+RESETCOLOR
+RETURN 1
+
+;--------------------------------------------------------
+; 该鱼种全部取肉：从最旧开始逐条转换，直到取完或背包装满
+; ARG = 鱼种ID
+;--------------------------------------------------------
+@生活系统_隙间取肉_全部(ARG)
+#LOCALSIZE 5
+#LOCALSSIZE 1
+#DIM DYNAMIC 全部鱼种
+#DIM DYNAMIC 全部道具
+#DIM L_UIDS, 100
+全部鱼种 = ARG
+全部道具 = QOL_FISH_GET_ITEM_ID(全部鱼种)
+IF 全部道具 <= 0
+        PRINTFORMW 这种鱼没法取肉……
+        RETURN 0
+ENDIF
+LOCAL = 0        ;已取数量
+LOCAL:1 = QOL_FISH_INSTANCE_LIST(L_UIDS)
+FOR LOCAL:2, 0, LOCAL:1
+        IF QOL_FISH_INSTANCE_GET(L_UIDS:(LOCAL:2))
+                IF RESULT:0 == 全部鱼种
+                        IF ITEM:全部道具 >= 99
+                                BREAK
+                        ENDIF
+                        CALL GET_ITEM(TOSTR(全部道具), 1, 1)
+                        LOCAL = QOL_FISH_INSTANCE_REMOVE(L_UIDS:(LOCAL:2))
+                        LOCAL ++
+                ENDIF
+        ENDIF
+NEXT
+IF LOCAL > 0
+        SETCOLOR C_YELLOW
+        PRINTFORMW 取出了{LOCAL}尾%QOL_FISH_GET_NAME(全部鱼种)%的鱼肉，得到了「\@ 全部道具 == 707 ? 魚 # 好吃的魚 \@」×{LOCAL}
+        RESETCOLOR
+ELSE
+        PRINTFORMW 隙间里没有这种鱼的记录……
+ENDIF
+RETURN 1
+
+;--------------------------------------------------------
+; 扩容：收藏隙間（ITEM:400）×10 → 容量+1（上限90）
+;--------------------------------------------------------
+@生活系统_隙间扩容
+#LOCALSIZE 1
+#LOCALSSIZE 1
+IF 生活系统_隙间容量() >= 隙间容量上限
+        PRINTFORML 隙间已经被撑到了极限……（容量{生活系统_隙间容量()}）
+        RETURN 0
+ENDIF
+IF ITEM:400 < 隙间扩容消耗
+        PRINTFORML 收藏隙間不足（需要{隙间扩容消耗}个，现有{ITEM:400}个）……
+        RETURN 0
+ENDIF
+PRINTFORML 消耗{隙间扩容消耗}个收藏隙間，把隙间撑大一点？（容量 {生活系统_隙间容量()} → {生活系统_隙间容量() + 1}）
+CALL ASK_YN, "消耗收藏隙間×10扩容", "再想想"
+IF RESULT == 0
+        ITEM:400 -= 隙间扩容消耗
+        生活系统_隙间扩容次数 ++
+        PRINTFORMW 隙间被撑大了一点点……（容量 {生活系统_隙间容量()}）
+ENDIF
+RETURN 1

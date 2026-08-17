@@ -1,0 +1,36 @@
+﻿;-------------------------------------------------
+;隙间渔获
+;日常系指令、レベル1
+;生活系统大修 - 钓鱼系统（钓鱼2.0：渔获与道具解耦）
+;捕获的鱼按「鱼种+个体尺寸」暂存于隙间，可随时查看与取肉；
+;主界面与存储逻辑见 ERB/DLC/生活系统大修/生活系统_隙间渔获.ERB
+;-------------------------------------------------
+@ADD_CUSTOM_COM512
+#LOCALSIZE 1
+#LOCALSSIZE 1
+CALL 生活系统_隙间渔获界面
+RETURN RESULT
+
+@ADD_CUSTOM_COM_ABLE512
+#LOCALSIZE 1
+#LOCALSSIZE 1
+;生活系统大修 - 钓鱼系统开关
+SIF !生活系统_钓鱼
+        RETURN 0
+RETURN 1
+
+@ADD_CUSTOM_COM512_TAGS
+#LOCALSIZE 1
+#LOCALSSIZE 1
+#FUNCTION
+SETBIT LOCAL, BIT_家事コマンド
+RETURNF LOCAL
+
+;-------------------------------------------------
+; 动态名字注册（Custom_Commands 系统：GETMETHS(@"Custom_COM{ARG}_NAME","Custom COM")）
+;-------------------------------------------------
+@Custom_COM512_NAME
+#LOCALSIZE 1
+#LOCALSSIZE 1
+#FUNCTIONS
+RETURNF "隙间渔获"

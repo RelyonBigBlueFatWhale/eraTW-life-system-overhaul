@@ -57,6 +57,7 @@ PRINTFORML [5] 钓鱼难度　　\@ 生活系统_钓鱼_难度 ? [简单] # [默
 PRINTFORML [6] 玩法说明
 DRAWLINE
 PRINTFORML [7] 全部关闭　（需确认）
+PRINTFORML [8] 隙间渔获　\@ 生活系统_钓鱼 ? （查看渔获/取肉） # （需开启钓鱼） \@
 PRINTFORML [0] 返回
 INPUT
 SELECTCASE RESULT
@@ -94,11 +95,11 @@ SELECTCASE RESULT
 		PRINTL 　　　　　提示：先去图书馆寻找一下耕种的基础教程再开始尝试种地会比较好
 		PRINTL 【酿酒】橡木酒桶独立发酵（酒桶0=原版酒虫，1~5由家具屋打造）
 		PRINTL 【钓鱼】小游戏：浮漂下沉时提竿；拉锯时选对方向与鱼角力，在它挣脱之前拉上来
+		PRINTL 　　　　　捕获的鱼会暂存于「隙间渔获」（主菜单[8]），手动获取鱼肉时才会变成道具
 		PRINTL 　　　　　[默认]时限较短更有挑战，[简单]时限宽松；钓鱼技艺越高反应时间越长
 		PRINTL
 		PRINTL ※ 咸鸭蛋产业链：鸭蛋 → 调合 → 清酒中腌制成熟 → 咸鸭蛋（需「养鸡+酿酒」同时开启）
 		PRINTFORMW 按任意键返回……
-		INPUT
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
 	CASE 7
@@ -112,6 +113,15 @@ SELECTCASE RESULT
 			生活系统_钓鱼 = 0
 			PRINTFORMW 已关闭所有生活系统子系统
 			RETURN
+		ENDIF
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 8
+		;隙间渔获（钓鱼2.0）：查看渔获、获取鱼肉、扩容隙间
+		IF 生活系统_钓鱼
+			CALL 生活系统_隙间渔获界面
+		ELSE
+			PRINTFORMW 隙间渔获需先开启钓鱼系统
 		ENDIF
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
