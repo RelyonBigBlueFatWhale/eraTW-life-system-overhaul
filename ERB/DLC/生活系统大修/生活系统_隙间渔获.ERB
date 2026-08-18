@@ -171,6 +171,7 @@ FOR LOCAL:3, 页偏移, LOCAL:4
                 PRINTFORML [{LOCAL:5,2}] 体长{LOCAL:6}cm　（第{LOCAL:7}天捕获）
         ENDIF
 NEXT
+PRINTFORML 　　　（选择一条鱼查看它的详情）
 DRAWLINE
 IF LOCAL:1 > 20 && LOCAL:4 < LOCAL:1
         PRINTL [9] 下一页
@@ -194,10 +195,10 @@ SELECTCASE RESULT
                 CLEARLINE 1
                 GOTO 鱼种页_输入
         CASE 1 TO 20
-                ;本页第N条 → uid
+                ;本页第N条 → uid，进入详情页（尺寸评价+特征+确认取肉）
                 LOCAL:3 = 页偏移 + RESULT - 1
                 IF LOCAL:3 < LOCAL:1
-                        CALL 生活系统_隙间取肉(L_UIDS:(LOCAL:3))
+                        CALL 生活系统_隙间鱼情报(L_UIDS:(LOCAL:3))
                 ENDIF
                 CLEARLINE LINECOUNT - LOCAL:0
                 GOTO 鱼种页_循环
@@ -206,6 +207,121 @@ SELECTCASE RESULT
                 GOTO 鱼种页_输入
 ENDSELECT
 RETURN 1
+
+;--------------------------------------------------------
+; 鱼情报页：点击某条鱼后展示 尺寸评价 + 稀有度 + 特征描述（上色），
+; 下方「获取鱼肉」按钮需二次确认后才执行取肉。
+; ARG = 实例uid
+;--------------------------------------------------------
+@生活系统_隙间鱼情报(ARG)
+#LOCALSIZE 4
+#LOCALSSIZE 1
+#DIM DYNAMIC 情报uid
+#DIM DYNAMIC 情报鱼种
+#DIM DYNAMIC 情报尺寸
+情报uid = ARG
+IF QOL_FISH_INSTANCE_GET(情报uid) == 0
+        PRINTFORMW 那条鱼已经不在隙间里了……
+        RETURN 0
+ENDIF
+情报鱼种 = RESULT:0
+情报尺寸 = RESULT:1
+;鱼名（按稀有度上色）
+LOCAL = QOL_FISH_GET_TIER(情报鱼种)
+SELECTCASE LOCAL
+        CASE 5, 6
+                SETCOLOR C_PINK
+        CASE 3, 4
+                SETCOLOR C_AQUA
+        CASEELSE
+                SETCOLOR C_GREEN
+ENDSELECT
+PRINTFORML 〈%QOL_FISH_GET_NAME(情报鱼种)%〉
+RESETCOLOR
+;尺寸评价（彩色）
+PRINTFORML 一尾体长{情报尺寸}厘米的%QOL_FISH_GET_NAME(情报鱼种)%
+SETCOLOR C_YELLOW
+PRINTFORML 　　　%生活系统_隙间_尺寸评价(情报鱼种, 情报尺寸)%
+RESETCOLOR
+;稀有度（彩色）
+SETCOLOR C_PINK
+SELECTCASE LOCAL
+        CASE 1
+                PRINTFORML 稀有度：★☆☆☆☆（常见）
+        CASE 2
+                PRINTFORML 稀有度：★★☆☆☆（少见）
+        CASE 3
+                PRINTFORML 稀有度：★★★☆☆（稀有）
+        CASE 4
+                PRINTFORML 稀有度：★★★★☆（珍稀）
+        CASE 5
+                PRINTFORML 稀有度：★★★★★（传说）
+        CASEELSE
+                PRINTFORML 稀有度：★★★★★★（？？？）
+ENDSELECT
+RESETCOLOR
+;特征描述（多行）
+PRINTFORML %QOL_FISH_GET_DESC(情报鱼种)%
+DRAWLINE
+PRINTL [1] 获取鱼肉　[0] 返回
+$鱼情报_输入
+INPUT
+SELECTCASE RESULT
+        CASE 0
+                RETURN 1
+        CASE 1
+                ;二次确认后取肉
+                CALL ASK_YN, "把这条鱼取肉装进背包？", "再看看"
+                IF RESULT == 0
+                        CALL 生活系统_隙间取肉(情报uid)
+                ENDIF
+                RETURN 1
+        CASEELSE
+                CLEARLINE 1
+                GOTO 鱼情报_输入
+ENDSELECT
+RETURN 1
+
+;--------------------------------------------------------
+; 尺寸评价：按鱼种自身的可能尺寸区间给出相对评价文案
+; ARG = 鱼种ID，ARG:1 = 个体尺寸cm
+;--------------------------------------------------------
+@生活系统_隙间_尺寸评价(ARG, ARG:1)
+#LOCALSIZE 3
+#LOCALSSIZE 1
+#FUNCTIONS
+#DIM DYNAMIC 评鱼种
+#DIM DYNAMIC 评尺寸
+评鱼种 = ARG
+评尺寸 = ARG:1
+LOCAL = SQL_P_EXECUTE_SCALAR_LONG("QOL_DISH_DB", "SELECT size_a FROM QOL_FISH_DB WHERE fish_id = @0", TOSTR(评鱼种))
+LOCAL:1 = SQL_P_EXECUTE_SCALAR_LONG("QOL_DISH_DB", "SELECT size_b FROM QOL_FISH_DB WHERE fish_id = @0", TOSTR(评鱼种))
+;可能尺寸区间：[size_b, size_a-1]；比例=相对位置
+LOCAL:2 = LOCAL - 1 - LOCAL:1
+SIF LOCAL:2 <= 0
+        LOCAL:2 = 1
+LOCAL = (评尺寸 - LOCAL:1) * 100 / LOCAL:2
+;绝对尺寸底线优先：避免“70cm的鲑鱼却说迷你”的违和
+IF 评尺寸 <= 10
+        RETURNF "迷你得像是刚破卵的鱼苗"
+ELSEIF 评尺寸 >= 80
+        RETURNF "庞大的体型简直像是水底的传说"
+ELSE
+        SELECTCASE LOCAL
+                CASE IS >= 85
+                        RETURNF "在这一种鱼里也算得上顶尖的大个子"
+                CASE IS >= 65
+                        RETURNF "体格壮硕的大鱼"
+                CASE IS >= 45
+                        RETURNF "尺寸恰到好处的成鱼"
+                CASE IS >= 25
+                        RETURNF "个头还不大，仍有不少成长空间"
+                CASEELSE
+                        RETURNF "相对同类而言偏小的体量"
+        ENDSELECT
+ENDIF
+RETURNF ""
+
 
 ;--------------------------------------------------------
 ; 单条取肉：实例→道具（鱼707/好吃的鱼708），1尾=1道具
