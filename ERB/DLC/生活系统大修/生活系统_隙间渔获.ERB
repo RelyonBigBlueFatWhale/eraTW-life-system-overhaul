@@ -65,9 +65,10 @@ RETURN 1
 #DIM L_SUM, 41        ;各鱼种尺寸合计（算平均）
 #DIM L_IDX, 41        ;显示序号→鱼种ID 映射
 ;仅钓鱼系统开启时可用
-SIF !生活系统_钓鱼
+IF !生活系统_钓鱼
         PRINTFORMW 隙间渔获是钓鱼系统的附属空间……先开启钓鱼系统再来吧
         RETURN -1
+ENDIF
 $隙间_主菜单
 LOCAL:0 = LINECOUNT
 ;聚合统计
