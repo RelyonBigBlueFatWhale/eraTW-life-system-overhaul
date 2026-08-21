@@ -134,13 +134,21 @@ ELSE
 		RETURN -1
 	ENDIF
 ENDIF
-;生活系统大修：实用书 → 选择想找哪方面的书（书籍分区；任一生活系统开启时启用）
-IF RESULT == 1 && (生活系统_养鸡 || 生活系统_种地 || 生活系统_酿酒 || 生活系统_钓鱼)
-        CALL ASK_M("人际沟通", 1, "烹饪菜谱", 1, "垂钓指南", 1, "荒野求生", 1, "调合配方", 1, "伐木心得", 1, "耕种教材", 生活系统_种地, "中止", 1)
-        IF RESULT == 7
-                RETURN -1
-        ENDIF
-        LOCAL = RESULT   ;0=会話 1=料理 2=釣り 3=採集 4=調合 5=伐採 6=耕种
+;生活系统大修：实用书 → 选择想找哪方面的书（书籍分区；需开启读书系统）
+IF RESULT == 1 && 生活系统_读书
+	;耕种教材仅在种地系统开启时显示（完全隐藏而非灰显）
+	IF 生活系统_种地
+		CALL ASK_M("人际沟通", 1, "烹饪菜谱", 1, "垂钓指南", 1, "荒野求生", 1, "调合配方", 1, "伐木心得", 1, "耕种教材", 1, "中止", 1)
+		IF RESULT == 7
+			RETURN -1
+		ENDIF
+	ELSE
+		CALL ASK_M("人际沟通", 1, "烹饪菜谱", 1, "垂钓指南", 1, "荒野求生", 1, "调合配方", 1, "伐木心得", 1, "中止", 1)
+		IF RESULT == 6
+			RETURN -1
+		ENDIF
+	ENDIF
+	LOCAL = RESULT   ;0=会話 1=料理 2=釣り 3=採集 4=調合 5=伐採 6=耕种（仅种地开启时可达6）
 ENDIF
 IF TARGET == 54 && CFLAG:325 == 5
 	IF TALENT:恋慕
@@ -205,7 +213,7 @@ SELECTCASE TFLAG:193
 			EXP:TARGET:戦闘経験 += 5 + READING_EXP*MAGIC_DLC_等级重置
 	CASE 3
 	;文学
-		IF 生活系统_养鸡 || 生活系统_种地 || 生活系统_酿酒 || 生活系统_钓鱼
+		IF 生活系统_读书
 			CALL 生活系统_读书_学习判定(0, ABL:MASTER:教養, 6 + 2*MAGIC_DLC_等级重置, READING_EXP)
 		ELSE
 			EXP:MASTER:学習経験 += READING_EXP
@@ -214,7 +222,7 @@ SELECTCASE TFLAG:193
 		ENDIF
 	CASE 5
 	;実用
-		IF 生活系统_养鸡 || 生活系统_种地 || 生活系统_酿酒 || 生活系统_钓鱼
+		IF 生活系统_读书
 			;生活系统大修：按所选书籍分区进行等级化判定（LOCAL 为分区号）
 			SELECTCASE LOCAL
 				CASE 0

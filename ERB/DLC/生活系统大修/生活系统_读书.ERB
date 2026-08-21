@@ -42,43 +42,37 @@ IF RAND:(判定上限 - 判定等级 + 3) < 判定上限 - 判定等级
                         EXP:MASTER:学習経験 += 判定经验
                         SIF TARGET > 0 && MAGIC_DLC_等级重置
                                 EXP:TARGET:学習経験 += 判定经验
-                        PRINTFORML 沉浸在书页之间，若有所思……
                 CASE 1
                         EXP:MASTER:会話経験 += 判定经验
                         SIF TARGET > 0 && MAGIC_DLC_等级重置
                                 EXP:TARGET:会話経験 += 判定经验
-                        PRINTFORML 学到了一点点与人交谈的门道……
                 CASE 2
                         EXP:MASTER:料理経験 += 判定经验
                         SIF TARGET > 0 && MAGIC_DLC_等级重置
                                 EXP:TARGET:料理経験 += 判定经验
-                        PRINTFORML 记下了一道全新的菜谱……
                 CASE 3
                         EXP:MASTER:釣り経験 += 判定经验
                         SIF TARGET > 0 && MAGIC_DLC_等级重置
                                 EXP:TARGET:釣り経験 += 判定经验
-                        PRINTFORML 对垂钓的理解更深了一些……
                 CASE 4
                         EXP:MASTER:採集経験 += 判定经验
                         SIF TARGET > 0 && MAGIC_DLC_等级重置
                                 EXP:TARGET:採集経験 += 判定经验
-                        PRINTFORML 学到了一些野外生存的门道……
                 CASE 5
                         EXP:MASTER:調合経験 += 判定经验
                         SIF TARGET > 0 && MAGIC_DLC_等级重置
                                 EXP:TARGET:調合経験 += 判定经验
-                        PRINTFORML 新的调合配方在脑中逐渐成型……
                 CASE 6
                         EXP:MASTER:伐採経験 += 判定经验
                         SIF TARGET > 0 && MAGIC_DLC_等级重置
                                 EXP:TARGET:伐採経験 += 判定经验
-                        PRINTFORML 学到了更高效的伐木手法……
                 CASE 7
                         EXP:MASTER:耕种经验 += 判定经验
                         SIF TARGET > 0 && MAGIC_DLC_等级重置
                                 EXP:TARGET:耕种经验 += 判定经验
-                        PRINTFORML 对耕种的理解又加深了一些……
         ENDSELECT
+        ;学到时展示一段对应书籍的真实摘录
+        CALL 生活系统_读书_摘录(判定技能)
 ELSE
         PRINTFORML 可惜没能从书里找到有用的内容……
 ENDIF

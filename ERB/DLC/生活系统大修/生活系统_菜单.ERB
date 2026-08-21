@@ -52,11 +52,15 @@ SIF 生活系统_钓鱼
 	SETCOLOR 0x00FF00
 PRINTFORML [4] 钓鱼系统　　\@ 生活系统_钓鱼 ? [已生效] # [未启动] \@
 RESETCOLOR
+SIF 生活系统_读书
+	SETCOLOR 0x00FF00
+PRINTFORML [5] 读书系统　　\@ 生活系统_读书 ? [已生效] # [未启动] \@
+RESETCOLOR
 DRAWLINE
-PRINTFORML [5] 钓鱼难度　　\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
-PRINTFORML [6] 玩法说明
+PRINTFORML [6] 钓鱼难度　　\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
+PRINTFORML [7] 玩法说明
 DRAWLINE
-PRINTFORML [7] 全部关闭　（需确认）
+PRINTFORML [8] 全部关闭　（需确认）
 PRINTFORML [0] 返回
 INPUT
 SELECTCASE RESULT
@@ -82,12 +86,18 @@ SELECTCASE RESULT
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
 	CASE 5
+		;读书系统改造开关（v2.1.3：实用书分区选择 + 等级化学习判定）
+		生活系统_读书 = !生活系统_读书
+		PRINTFORMW 读书系统已\@ 生活系统_读书 ? 启动 # 关闭 \@
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 6
 		;钓鱼难度切换
 		生活系统_钓鱼_难度 = !生活系统_钓鱼_难度
 		PRINTFORMW 钓鱼小游戏难度已切换为\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
-	CASE 6
+	CASE 7
 		;玩法说明（按任意键返回）
 		PRINTL 【养鸡】强化鸡舍养殖：收蛋、饲料、亲密度、孵化器、自动抚摸机
 		PRINTL 【种地】新增「育苗」指令：在菜园旁消耗采集素材育成种子，可种植新作物；浆果与菌菇类收获后还能再收一茬
@@ -95,13 +105,14 @@ SELECTCASE RESULT
 		PRINTL 【酿酒】橡木酒桶独立发酵（酒桶0=原版酒虫，1~5由家具屋打造）
 		PRINTL 【钓鱼】小游戏：浮漂下沉时提竿；拉锯时选对方向与鱼角力，在它挣脱之前拉上来
 		PRINTL 　　　　　捕获的鱼会暂存于「隙间渔获」（主菜单[114] 或 行动菜单→[自定义]），查看详情后可确认获取鱼肉
+PRINTL 【读书】读实用书可自选书籍分区；学到经验的机会随技能等级递减、满级后一无所获（需开启读书系统）
 		PRINTL 　　　　　[默认]时限较短更有挑战，[简单]时限宽松；钓鱼技艺越高反应时间越长
 		PRINTL
 		PRINTL ※ 咸鸭蛋产业链：鸭蛋 → 调合 → 清酒中腌制成熟 → 咸鸭蛋（需「养鸡+酿酒」同时开启）
 		PRINTFORMW 按任意键返回……
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
-	CASE 7
+	CASE 8
 		;一键关闭（危险操作：二次确认，不重启游戏——开关判定实时生效）
 		PRINTFORML 确定要关闭全部生活系统子系统吗？
 		CALL ASK_YN, "确认关闭", "再想想"
@@ -110,6 +121,7 @@ SELECTCASE RESULT
 			生活系统_种地 = 0
 			生活系统_酿酒 = 0
 			生活系统_钓鱼 = 0
+			生活系统_读书 = 0
 			PRINTFORMW 已关闭所有生活系统子系统
 			RETURN
 		ENDIF

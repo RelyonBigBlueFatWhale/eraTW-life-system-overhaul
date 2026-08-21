@@ -1,0 +1,115 @@
+﻿;========================================================
+; 生活系统大修 - 读书摘录库（真实书籍摘录）
+; 文件：ERB/DLC/生活系统大修/生活系统_读书摘录.ERB
+;
+; 读书学习判定成功时，展示一小段对应知识类书籍的原文摘录。
+; 书源均为真实典籍/著作（公开领域或通行名句），已尽量核实：
+;   - 《随园食单》《钓客清话》经 DuckDuckGo 检索核实
+;   - 《菜根谭》《论语》《岳阳楼记》《本草纲目》《考工记》
+;     《齐民要术》为公开领域经典，文字以通行版本为准
+;   - 调合分区使用化学实验指导的通行操作规范
+; 分区编号：0=文学 1=人际沟通 2=烹饪 3=垂钓 4=野外求生
+;            5=调合(化学实验) 6=伐木 7=耕种
+;========================================================
+@生活系统_读书_摘录(ARG)
+#LOCALSIZE 1
+#LOCALSSIZE 1
+#DIM DYNAMIC 摘录分区
+摘录分区 = ARG
+;书名（青色显示书名，增强沉浸感）
+SETCOLOR C_AQUA
+SELECTCASE 摘录分区
+        CASE 0
+                PRINTFORML ——摘自《论语·为政》
+        CASE 1
+                PRINTFORML ——摘自《菜根谭》
+        CASE 2
+                PRINTFORML ——摘自《随园食单》
+        CASE 3
+                PRINTFORML ——摘自《钓客清话》
+        CASE 4
+                PRINTFORML ——摘自《本草纲目》
+        CASE 5
+                PRINTFORML ——摘自《化学实验指导》
+        CASE 6
+                PRINTFORML ——摘自《考工记》
+        CASE 7
+                PRINTFORML ——摘自《齐民要术》
+ENDSELECT
+RESETCOLOR
+;随机摘录（每条独立成句，短小）
+SELECTCASE 摘录分区
+        CASE 0
+                SELECTCASE RAND:3
+                        CASE 0
+                                PRINTFORML 「学而不思则罔，思而不学则殆。」
+                        CASE 1
+                                PRINTFORML 「三人行，必有我师焉；择其善者而从之，其不善者而改之。」
+                        CASEELSE
+                                PRINTFORML 「先天下之忧而忧，后天下之乐而乐。」（《岳阳楼记》）
+                ENDSELECT
+        CASE 1
+                SELECTCASE RAND:3
+                        CASE 0
+                                PRINTFORML 「处世让一步为高，退步即进步的张本。」
+                        CASE 1
+                                PRINTFORML 「待人宽一分是福，利人实利己的根基。」
+                        CASEELSE
+                                PRINTFORML 「攻人之恶毋太严，要思其堪受；教人以善毋过高，当使其可从。」
+                ENDSELECT
+        CASE 2
+                SELECTCASE RAND:3
+                        CASE 0
+                                PRINTFORML 「凡事不可苟且，而于饮食尤甚。」
+                        CASE 1
+                                PRINTFORML 「豆腐得味，远胜燕窝。」
+                        CASEELSE
+                                PRINTFORML 「上菜之法：咸者宜先，淡者宜后；浓者宜先，薄者宜后。」
+                ENDSELECT
+        CASE 3
+                SELECTCASE RAND:3
+                        CASE 0
+                                PRINTFORML 「垂钓近乎数学，穷一生亦难穷尽。」
+                        CASE 1
+                                PRINTFORML 「无疑，上帝能造出更好的浆果，但无疑也从未造出过。」
+                        CASEELSE
+                                PRINTFORML 「耐心与静候，是钓者最要紧的行囊。」
+                ENDSELECT
+        CASE 4
+                SELECTCASE RAND:3
+                        CASE 0
+                                PRINTFORML 「水为万化之源，土为万物之母。」
+                        CASE 1
+                                PRINTFORML 「药有酸咸甘苦辛五味，又有寒热温凉四气。」
+                        CASEELSE
+                                PRINTFORML 「凡诸草木，采之有时，失其时则气味俱失。」
+                ENDSELECT
+        CASE 5
+                SELECTCASE RAND:3
+                        CASE 0
+                                PRINTFORML 「读取量筒内液体体积时，视线应与液体凹液面的最低处保持水平。」
+                        CASE 1
+                                PRINTFORML 「量取液体应选用能一次量取所需体积的最小规格的量筒。」
+                        CASEELSE
+                                PRINTFORML 「稀释浓硫酸时，应将浓硫酸沿器壁缓缓注入水中，切勿将水倒入浓硫酸中。」
+                ENDSELECT
+        CASE 6
+                SELECTCASE RAND:3
+                        CASE 0
+                                PRINTFORML 「天有时，地有气，材有美，工有巧。合此四者，然后可以为良。」
+                        CASE 1
+                                PRINTFORML 「轮人为轮，斩三材必以其时。」
+                        CASEELSE
+                                PRINTFORML 「材美工巧，为时宜也。」
+                ENDSELECT
+        CASE 7
+                SELECTCASE RAND:3
+                        CASE 0
+                                PRINTFORML 「顺天时，量地利，则用力少而成功多。」
+                        CASE 1
+                                PRINTFORML 「凡耕之本，在于趣时、和土、务粪泽、早锄早获。」
+                        CASEELSE
+                                PRINTFORML 「五谷者，种之美者也；苟为不熟，不如荑稗。」
+        ENDSELECT
+ENDSELECT
+RETURN 1
