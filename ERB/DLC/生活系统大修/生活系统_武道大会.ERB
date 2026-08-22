@@ -1,0 +1,94 @@
+﻿;========================================================
+; 生活系统大修 - 天下第一武道大会（v2.1.6）
+; 文件：ERB/DLC/生活系统大修/生活系统_武道大会.ERB
+;
+; 在博丽神社境内（神社境内=20）随时与全幻想乡少女开展弹幕战斗。
+;  - 名单：CHARASORT_EX（全角色），跳过 MASTER，标注 陌生/今日已战/胜利
+;  - 对战：选定后 TARGET=对方 → CALL COM480 复用标准弹幕胜负
+;    （确认/规则/口上/奖励/胜利实绩/每日一次限制均沿用原版，不改造战斗逻辑）
+;  - 开关：生活系统大修设置 → [10] 天下第一武道大会
+;========================================================
+
+@生活系统_武道大会
+#LOCALSIZE 7
+#LOCALSSIZE 1
+#DIM L_LIST, 220      ;参赛者角色ID列表
+#DIM DYNAMIC L_PAGE   ;分页偏移
+;门控：开关 + 博丽神社境内
+SIF !生活系统_武道大会 || CFLAG:MASTER:現在位置 != 神社境内
+        PRINTFORML 现在这里无法召开天下第一武道大会……
+        RETURN -1
+L_PAGE = 0
+$大会_循环
+LOCAL:0 = LINECOUNT
+;收集名单（CHARASORT_EX 返回全部角色 ID，跳过 MASTER）
+CALL CHARASORT_EX
+LOCAL:1 = 0
+FOR LOCAL:2, 0, EX_CHARANUM
+        LOCAL:3 = RESULT:LOCAL:2
+        SIF LOCAL:3 < 0
+                CONTINUE
+        SIF LOCAL:3 == MASTER
+                CONTINUE
+        L_LIST:(LOCAL:1) = LOCAL:3
+        LOCAL:1 ++
+NEXT
+PRINTFORML 【天下第一武道大会】在博丽神社境内盛大召开！　参赛者共{LOCAL:1}人
+PRINTFORML 　　　（选择一位少女挑战；战罢可继续挑战下一位）
+DRAWLINE
+;分页显示：每页20人
+LOCAL:2 = MIN(LOCAL:1, L_PAGE + 20)
+LOCAL:3 = 0
+FOR LOCAL:4, L_PAGE, LOCAL:2
+        LOCAL:3 ++
+        LOCAL:5 = L_LIST:(LOCAL:4)
+        ;状态标记
+        LOCALS = ""
+        IF !CFLAG:LOCAL:5:面識
+                LOCALS '= "（陌生）"
+        ENDIF
+        IF TCVAR:LOCAL:5:弾幕勝負不能
+                LOCALS '= "（今日已战）"
+        ENDIF
+        SIF CFLAG:LOCAL:5:弾幕勝負勝利
+                LOCALS '= "★胜"
+        PRINTFORML [{LOCAL:3,2}] %CALLNAME:LOCAL:5%%LOCALS%
+NEXT
+DRAWLINE
+IF LOCAL:1 > 20 && LOCAL:2 < LOCAL:1
+        PRINTL [9] 下一页
+ENDIF
+PRINTL [0] 返回
+$大会_输入
+INPUT
+SELECTCASE RESULT
+        CASE 0
+                RETURN 1
+        CASE 9
+                IF LOCAL:1 > 20 && LOCAL:2 < LOCAL:1
+                        L_PAGE += 20
+                        CLEARLINE LINECOUNT - LOCAL:0
+                        GOTO 大会_循环
+                ENDIF
+                CLEARLINE 1
+                GOTO 大会_输入
+        CASE 1 TO 20
+                ;本页第N条 → 角色ID
+                LOCAL:4 = L_PAGE + RESULT - 1
+                IF LOCAL:4 < LOCAL:1
+                        LOCAL:5 = L_LIST:(LOCAL:4)
+                        ;今日已战过则拒绝（沿用标准弹幕胜负的每日限制）
+                        IF TCVAR:LOCAL:5:弾幕勝負不能
+                                PRINTFORMW %CALLNAME:LOCAL:5%今天已经很累了，明天再来挑战吧
+                        ELSE
+                                TARGET = LOCAL:5
+                                CALL COM480
+                        ENDIF
+                ENDIF
+                CLEARLINE LINECOUNT - LOCAL:0
+                GOTO 大会_循环
+        CASEELSE
+                CLEARLINE 1
+                GOTO 大会_输入
+ENDSELECT
+RETURN 1
