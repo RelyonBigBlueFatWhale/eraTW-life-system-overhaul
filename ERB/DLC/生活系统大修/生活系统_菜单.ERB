@@ -61,6 +61,10 @@ PRINTFORML [6] 钓鱼难度　　\@ 生活系统_钓鱼_难度 ? [简单] # [默
 PRINTFORML [7] 玩法说明
 DRAWLINE
 PRINTFORML [8] 全部关闭　（需确认）
+SIF 生活系统_魔法联动
+	SETCOLOR 0x00FF00
+PRINTFORML [9] 魔法版联动内容　　\@ 生活系统_魔法联动 ? [已生效] # [未启动] \@
+RESETCOLOR
 PRINTFORML [0] 返回
 INPUT
 SELECTCASE RESULT
@@ -122,9 +126,16 @@ PRINTL 【读书】读实用书可自选书籍分区；学到经验的机会随�
 			生活系统_酿酒 = 0
 			生活系统_钓鱼 = 0
 			生活系统_读书 = 0
+			生活系统_魔法联动 = 0
 			PRINTFORMW 已关闭所有生活系统子系统
 			RETURN
 		ENDIF
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 9
+		;魔法版联动内容开关（v2.1.5：天堂制造 TSlv5 魔法）
+		生活系统_魔法联动 = !生活系统_魔法联动
+		PRINTFORMW 魔法版联动内容已\@ 生活系统_魔法联动 ? 启动 # 关闭 \@
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
 	CASE 0
