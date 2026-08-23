@@ -110,11 +110,6 @@ RETURN 0
 @生活系统_天堂制造_对自己
 #LOCALSIZE 1
 #LOCALSSIZE 1
-;生活系统大修·音乐：发动时播放《Crucified》（音乐补丁开关+生活系统音乐开关同时开启）
-IF 音乐补丁开关 && 生活系统_音乐 && EXISTSOUND("Crucified.mp3")
-        STOPSOUND
-        PLAYSOUND "Crucified.mp3"
-ENDIF
 生活系统_天堂制造加速 = 1
 SETCOLOR C_AQUA
 PRINTFORML 「天堂制造」！时间因子的影响被提升到了极致——

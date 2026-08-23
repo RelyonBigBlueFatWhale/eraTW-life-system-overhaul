@@ -318,11 +318,6 @@ ENDIF
 ;支付隙间传送费并开战
 MONEY -= LOCAL:6
 PRINTFORMW 消耗%金额表示(LOCAL:6)%元，通过隙间将%CALLNAME:(ARG)%传送到了擂台上！
-;生活系统大修·音乐：骚话时播放《AIZO》（音乐补丁开关+生活系统音乐开关同时开启）
-IF 音乐补丁开关 && 生活系统_音乐 && EXISTSOUND("AIZO.mp3")
-        STOPSOUND
-        PLAYSOUND "AIZO.mp3"
-ENDIF
 ;开战前骚话（非炸鱼：对方战斗力不低于玩家时）
 IF LOCAL:7 == 0
         PRINTFORML 开战前，%CALLNAME:MASTER%先来到%CALLNAME:(ARG)%面前，露出一个狂放的笑容，指着对方说到："先说好，你才是挑战者。"

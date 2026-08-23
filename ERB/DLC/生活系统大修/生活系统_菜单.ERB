@@ -69,10 +69,6 @@ SIF 生活系统_武道大会
 	SETCOLOR 0x00FF00
 PRINTFORML [10] 天下第一武道大会　\@ 生活系统_武道大会 ? [已生效] # [未启动] \@
 RESETCOLOR
-SIF 生活系统_音乐
-	SETCOLOR 0x00FF00
-PRINTFORML [11] 音乐开关　　\@ 生活系统_音乐 ? [已生效] # [未启动] \@
-RESETCOLOR
 PRINTFORML [0] 返回
 INPUT
 SELECTCASE RESULT
@@ -136,7 +132,6 @@ PRINTL 【读书】读实用书可自选书籍分区；学到经验的机会随�
 			生活系统_读书 = 0
 			生活系统_魔法联动 = 0
 			生活系统_武道大会 = 0
-			生活系统_音乐 = 0
 			PRINTFORMW 已关闭所有生活系统子系统
 			RETURN
 		ENDIF
@@ -152,12 +147,6 @@ PRINTL 【读书】读实用书可自选书籍分区；学到经验的机会随�
 		;天下第一武道大会开关（v2.1.6：博丽神社境内弹幕大会）
 		生活系统_武道大会 = !生活系统_武道大会
 		PRINTFORMW 天下第一武道大会已\@ 生活系统_武道大会 ? 启动 # 关闭 \@
-		CLEARLINE LINECOUNT - LOCAL
-		GOTO LIFE_MENU
-	CASE 11
-		;生活系统大修·音乐开关（与音乐补丁开关同时开启才播放）
-		生活系统_音乐 = !生活系统_音乐
-		PRINTFORMW 音乐开关已\@ 生活系统_音乐 ? 启动 # 关闭 \@（需音乐补丁开关同时开启）
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
 	CASE 0
