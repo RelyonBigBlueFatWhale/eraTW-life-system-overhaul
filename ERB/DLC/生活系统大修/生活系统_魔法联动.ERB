@@ -10,8 +10,11 @@
 ; 功能：
 ;   1. 熟练度获取：使用绯红之王 酿酒/加速孵化/战斗 时 15% 获得 1 点
 ;   2. 天堂制造（TSlv5，熟练度3解锁，ITEM:984）：
-;      - 对自己：时间压缩——所有非性爱系指令执行时间改为 1 分钟（就寝/次日清除）
-;      - 家具屋老板（制作家具中可选）：立即完工（FLAG:家具作成残り = 0）
+;      - 对自己：时间因子提升至极致——所有受时间因子影响的行动耗时缩短至1分钟；
+;        发动本身不消耗法力/TSP，改为按行动节省的时间结算（每节省1分钟消耗3点，
+;        按当前魔力来源 TSP/法力 等额；再次发动可选择退出）
+;      - 家具屋老板（制作家具中可选）：每加速1天消耗1000 TSP，TSP不足则消耗全部
+;        并把加速天数向上取整
 ;========================================================
 
 ;--------------------------------------------------------
@@ -51,28 +54,52 @@ RETURNF 1
 #LOCALSIZE 2
 #LOCALSSIZE 1
 ;发动条件防御：开关、魔法补丁、已解锁
-SIF !生活系统_魔法联动 || !MAGIC_DLC || ITEM:984 < 3
+IF !生活系统_魔法联动 || !MAGIC_DLC || ITEM:984 < 3
         PRINTFORMW 现在还不能发动「天堂制造」……
         RETURN 0
+ENDIF
 PRINTFORML 发动「天堂制造」！要将目标设定为？
-;正在制作家具时可选择家具屋老板
-IF FLAG:作成中家具 && FLAG:家具作成残り > 0
-        CALL ASK_M("对自己", 1, "家具屋老板", 1, "中止", 1)
-        SELECTCASE RESULT
-                CASE 0
+IF 生活系统_天堂制造加速
+        ;已在压缩状态：对自己变为退出天堂制造模式
+        IF FLAG:作成中家具 && FLAG:家具作成残り > 0
+                CALL ASK_M("退出天堂制造模式", 1, "家具屋老板", 1, "中止", 1)
+                SELECTCASE RESULT
+                        CASE 0
+                                CALL 生活系统_天堂制造_退出
+                                RETURN 1
+                        CASE 1
+                                CALL 生活系统_天堂制造_完工家具
+                                RETURN 1
+                        CASEELSE
+                                RETURN 0
+                ENDSELECT
+        ELSE
+                CALL ASK_M("退出天堂制造模式", 1, "中止", 1)
+                IF RESULT == 0
+                        CALL 生活系统_天堂制造_退出
+                        RETURN 1
+                ENDIF
+        ENDIF
+ELSE
+        ;未压缩：可对自己进入，或（制作家具中）选择家具屋老板
+        IF FLAG:作成中家具 && FLAG:家具作成残り > 0
+                CALL ASK_M("对自己", 1, "家具屋老板", 1, "中止", 1)
+                SELECTCASE RESULT
+                        CASE 0
+                                CALL 生活系统_天堂制造_对自己
+                                RETURN 1
+                        CASE 1
+                                CALL 生活系统_天堂制造_完工家具
+                                RETURN 1
+                        CASEELSE
+                                RETURN 0
+                ENDSELECT
+        ELSE
+                CALL ASK_M("对自己", 1, "中止", 1)
+                IF RESULT == 0
                         CALL 生活系统_天堂制造_对自己
                         RETURN 1
-                CASE 1
-                        CALL 生活系统_天堂制造_完工家具
-                        RETURN 1
-                CASEELSE
-                        RETURN 0
-        ENDSELECT
-ELSE
-        CALL ASK_M("对自己", 1, "中止", 1)
-        IF RESULT == 0
-                CALL 生活系统_天堂制造_对自己
-                RETURN 1
+                ENDIF
         ENDIF
 ENDIF
 RETURN 0
@@ -83,22 +110,61 @@ RETURN 0
 @生活系统_天堂制造_对自己
 #LOCALSIZE 1
 #LOCALSSIZE 1
+;生活系统大修·音乐：发动时播放《Crucified》（音乐补丁开关+生活系统音乐开关同时开启）
+IF 音乐补丁开关 && 生活系统_音乐 && EXISTSOUND("Crucified.mp3")
+        STOPSOUND
+        PLAYSOUND "Crucified.mp3"
+ENDIF
 生活系统_天堂制造加速 = 1
 SETCOLOR C_AQUA
-PRINTFORML 「天堂制造」！从现在起直到入睡，所有日常指令都将在转瞬之间完成！
+PRINTFORML 「天堂制造」！时间因子的影响被提升到了极致——
+PRINTFORML 从现在起直到入睡，所有受时间因子影响的行动都将在1分钟内完成！
+PRINTFORML （每次行动将按节省的时间消耗TSP/法力：每节省1分钟消耗3点）
 RESETCOLOR
 RETURN 1
 
 ;--------------------------------------------------------
-; 家具屋老板：立即完工当前制作中的家具
+; 退出天堂制造模式
 ;--------------------------------------------------------
-@生活系统_天堂制造_完工家具
+@生活系统_天堂制造_退出
 #LOCALSIZE 1
 #LOCALSSIZE 1
-FLAG:家具作成残り = 0
+生活系统_天堂制造加速 = 0
 SETCOLOR C_AQUA
-PRINTFORML 「天堂制造」！家具屋老板猛地回过神来——%ITEMNAME_TR(FLAG:作成中家具)%已经完工了！
+PRINTFORML 解除了「天堂制造」的时间压缩，时间恢复了正常的流速。
 RESETCOLOR
+RETURN 1
+
+;--------------------------------------------------------
+; 家具屋老板：以TSP加速当前制作中的家具（每加速1天消耗1000 TSP）
+;--------------------------------------------------------
+@生活系统_天堂制造_完工家具
+#LOCALSIZE 2
+#LOCALSSIZE 1
+;每加速1天消耗1000 TSP；TSP不足时消耗全部TSP并把加速天数向上取整（至多剩余天数）
+LOCAL = FLAG:家具作成残り * 1000
+IF BASE:MASTER:TSP >= LOCAL
+        ;TSP足够：加速全部剩余天数
+        BASE:MASTER:TSP -= LOCAL
+        FLAG:家具作成残り = 0
+        SETCOLOR C_AQUA
+        PRINTFORML 「天堂制造」！消耗{LOCAL}点TSP，%ITEMNAME_TR(FLAG:作成中家具)%瞬间完工了！
+        RESETCOLOR
+ELSE
+        ;TSP不足：消耗全部TSP，加速天数向上取整
+        LOCAL:1 = (BASE:MASTER:TSP + 999) / 1000
+        SIF LOCAL:1 > FLAG:家具作成残り
+                LOCAL:1 = FLAG:家具作成残り
+        IF LOCAL:1 > 0
+                BASE:MASTER:TSP = 0
+                FLAG:家具作成残り -= LOCAL:1
+                SETCOLOR C_AQUA
+                PRINTFORML 「天堂制造」！消耗了全部TSP，%ITEMNAME_TR(FLAG:作成中家具)%加速了{LOCAL:1}天！（还剩{FLAG:家具作成残り}天）
+                RESETCOLOR
+        ELSE
+                PRINTFORML 没有足够的TSP来加速……
+        ENDIF
+ENDIF
 RETURN 1
 
 ;--------------------------------------------------------
@@ -115,8 +181,19 @@ RETURN 0
 @EVENTCOMEND
 SIF !生活系统_天堂制造加速
         RETURN 0
-;性爱系指令不压缩
+;性爱系指令不压缩（不受时间因子影响）
 SIF 生活系统_非性爱系指令() == 0
         RETURN 0
+;节省时间 = 实际经过 - 1分钟；每节省1分钟消耗3点（TSP或法力，按当前魔力来源）
+LOCAL = TIME - 生活系统_指令开始时刻 - 1
+IF LOCAL > 0
+        LOCAL *= 3
+        IF M_FLAG:魔力来源 == 1
+                CALL RECOVER(MASTER, -LOCAL, "法力", "天堂制造的时间消耗")
+        ELSE
+                CALL RECOVER(MASTER, -LOCAL, "TSP", "天堂制造的时间消耗")
+        ENDIF
+        PRINTFORML 天堂制造消耗了{LOCAL}点\@ M_FLAG:魔力来源 == 1 ? 法力 # TSP \@（节省{LOCAL / 3}分钟）
+ENDIF
 TIME = 生活系统_指令开始时刻 + 1
 RETURN 0

@@ -201,9 +201,9 @@ ELSEIF RESULT == 818
 ;qol custom code
 ELSEIF RESULT == 890
 	CALL SHOW_FISHING_LIST_SELECT(FISHING_SPOT(CFLAG:MASTER:現在位置))
-;生活系统大修·天下第一武道大会
-ELSEIF RESULT == 892 && 生活系统_武道大会
-	CALL 生活系统_武道大会
+;生活系统大修·魔法版联动：行动菜单输入 984 直达魔法菜单（天堂制造等）
+ELSEIF RESULT == 984 && 生活系统_魔法联动
+	CALL MAGIC_USE
 ;;addition custom code from Yuugi's dialogue
 ;ELSEIF RESULT == 891 && CFLAG:64:現在位置 != CFLAG:MASTER:現在位置 && !FIRSTTIME("YuugiBath", 1, 64)
 ;	TRYCALL K64_CALLIN
