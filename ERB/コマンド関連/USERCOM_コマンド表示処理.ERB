@@ -248,7 +248,7 @@ SIF FISHING_SPOT(CFLAG:MASTER:現在位置) != 0 && ABL:MASTER:教養 >= 3
 	;PRINTC 钓鱼列表[890]
 	CALL HTML_PRINTBUTTONC, @"钓鱼列表[890]", 890, BTN_COLOR
 ;生活系统大修·天下第一武道大会：仅博丽神社境内
-SIF 生活系统_武道大会 && CFLAG:MASTER:現在位置 == 神社境内
+SIF 生活系统_武道大会 && (CFLAG:MASTER:現在位置 == 神社境内 || CFLAG:MASTER:現在位置 == P2境内)
 	;PRINTC 天下第一武道大会[892]
 	CALL HTML_PRINTBUTTONC, @"天下第一武道大会[892]", 892, BTN_COLOR
 ;魔改内容，显示接触，DEBUG功能

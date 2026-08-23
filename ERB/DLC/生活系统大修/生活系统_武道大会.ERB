@@ -15,7 +15,7 @@
 #DIM L_LIST, 220      ;参赛者角色ID列表
 #DIM DYNAMIC L_PAGE   ;分页偏移
 ;门控：开关 + 博丽神社境内
-SIF !生活系统_武道大会 || CFLAG:MASTER:現在位置 != 神社境内
+SIF !生活系统_武道大会 || (CFLAG:MASTER:現在位置 != 神社境内 && CFLAG:MASTER:現在位置 != P2境内)
         PRINTFORML 现在这里无法召开天下第一武道大会……
         RETURN -1
 L_PAGE = 0
