@@ -335,7 +335,6 @@ SELECTCASE RESULT
 		ENDIF
 		CALL RECOVER(MASTER, -4000, "TSP", "加速孵化的TSP消耗")
 		ITEM:绯红之王 --
-		孵化槽_剩余天数		ITEM:绯红之王 --
 		;生活系统大修·魔法版联动：使用绯红之王 15% 获得天堂制造熟练度
 		CALL 生活系统_魔法熟练度获取
 		孵化槽_剩余天数 = MAX(0, 孵化槽_剩余天数 - 100)

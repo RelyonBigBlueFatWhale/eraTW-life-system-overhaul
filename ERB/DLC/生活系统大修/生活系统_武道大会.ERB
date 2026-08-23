@@ -25,7 +25,7 @@ LOCAL:0 = LINECOUNT
 CALL CHARASORT_EX
 LOCAL:1 = 0
 FOR LOCAL:2, 0, EX_CHARANUM
-        LOCAL:3 = RESULT:LOCAL:2
+        LOCAL:3 = RESULT:(LOCAL:2)
         SIF LOCAL:3 < 0
                 CONTINUE
         SIF LOCAL:3 == MASTER
@@ -44,15 +44,15 @@ FOR LOCAL:4, L_PAGE, LOCAL:2
         LOCAL:5 = L_LIST:(LOCAL:4)
         ;状态标记
         LOCALS = ""
-        IF !CFLAG:LOCAL:5:面識
+        IF !CFLAG:(LOCAL:5):面識
                 LOCALS '= "（陌生）"
         ENDIF
-        IF TCVAR:LOCAL:5:弾幕勝負不能
+        IF TCVAR:(LOCAL:5):弾幕勝負不能
                 LOCALS '= "（今日已战）"
         ENDIF
-        SIF CFLAG:LOCAL:5:弾幕勝負勝利
+        SIF CFLAG:(LOCAL:5):弾幕勝負勝利
                 LOCALS '= "★胜"
-        PRINTFORML [{LOCAL:3,2}] %CALLNAME:LOCAL:5%%LOCALS%
+        PRINTFORML [{LOCAL:3,2}] %CALLNAME:(LOCAL:5)%%LOCALS%
 NEXT
 DRAWLINE
 IF LOCAL:1 > 20 && LOCAL:2 < LOCAL:1
@@ -78,8 +78,8 @@ SELECTCASE RESULT
                 IF LOCAL:4 < LOCAL:1
                         LOCAL:5 = L_LIST:(LOCAL:4)
                         ;今日已战过则拒绝（沿用标准弹幕胜负的每日限制）
-                        IF TCVAR:LOCAL:5:弾幕勝負不能
-                                PRINTFORMW %CALLNAME:LOCAL:5%今天已经很累了，明天再来挑战吧
+                        IF TCVAR:(LOCAL:5):弾幕勝負不能
+                                PRINTFORMW %CALLNAME:(LOCAL:5)%今天已经很累了，明天再来挑战吧
                         ELSE
                                 TARGET = LOCAL:5
                                 CALL COM480
