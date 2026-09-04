@@ -38,38 +38,50 @@ DRAWLINE
 ;子系统开关（[1]~[4] 直接切换，状态即时生效）
 SIF 生活系统_养鸡
 	SETCOLOR 0x00FF00
-PRINTFORML [1] 养鸡系统　　\@ 生活系统_养鸡 ? [已生效] # [未启动] \@
+PRINTFORML [ 1] 养鸡系统　　\@ 生活系统_养鸡 ? [已生效] # [未启动] \@
 RESETCOLOR
 SIF 生活系统_种地
 	SETCOLOR 0x00FF00
-PRINTFORML [2] 种地系统　　\@ 生活系统_种地 ? [已生效] # [未启动] \@
+PRINTFORML [ 2] 种地系统　　\@ 生活系统_种地 ? [已生效] # [未启动] \@
 RESETCOLOR
 SIF 生活系统_酿酒
 	SETCOLOR 0x00FF00
-PRINTFORML [3] 酿酒系统　　\@ 生活系统_酿酒 ? [已生效] # [未启动] \@
+PRINTFORML [ 3] 酿酒系统　　\@ 生活系统_酿酒 ? [已生效] # [未启动] \@
 RESETCOLOR
 SIF 生活系统_钓鱼
 	SETCOLOR 0x00FF00
-PRINTFORML [4] 钓鱼系统　　\@ 生活系统_钓鱼 ? [已生效] # [未启动] \@
-RESETCOLOR
-SIF 生活系统_读书
-	SETCOLOR 0x00FF00
-PRINTFORML [5] 读书系统　　\@ 生活系统_读书 ? [已生效] # [未启动] \@
+PRINTFORML [ 4] 钓鱼系统　　\@ 生活系统_钓鱼 ? [已生效] # [未启动] \@
 RESETCOLOR
 DRAWLINE
-PRINTFORML [6] 钓鱼难度　　\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
-PRINTFORML [7] 玩法说明
+PRINTFORML [ 6] 钓鱼难度　　\@ 生活系统_钓鱼_难度 ? [简单] # [默认] \@
+PRINTFORML [ 7] 玩法说明
 DRAWLINE
-PRINTFORML [8] 全部关闭　（需确认）
+PRINTFORML [ 8] 全部关闭　（需确认）
 SIF 生活系统_魔法联动
 	SETCOLOR 0x00FF00
-PRINTFORML [9] 魔法版联动内容　　\@ 生活系统_魔法联动 ? [已生效] # [未启动] \@
+PRINTFORML [ 9] 魔法版联动内容　　\@ 生活系统_魔法联动 ? [已生效] # [未启动] \@
 RESETCOLOR
 SIF 生活系统_武道大会
 	SETCOLOR 0x00FF00
 PRINTFORML [10] 天下第一武道大会　\@ 生活系统_武道大会 ? [已生效] # [未启动] \@
 RESETCOLOR
-PRINTFORML [0] 返回
+SIF 生活系统_音乐
+	SETCOLOR 0x00FF00
+PRINTFORML [11] 音乐开关　　\@ 生活系统_音乐 ? [已生效] # [未启动] \@
+RESETCOLOR
+SIF 生活系统_料理委托改善 || 生活系统_读书 || 生活系统_巧克力转换
+        SETCOLOR 0x00FF00
+PRINTFORML [12] 生活质量提升　　（读书 / 料理委托改善 / 巧克力转换）
+RESETCOLOR
+SIF 生活系统_养蜂
+        SETCOLOR 0x00FF00
+PRINTFORML [13] 养蜂系统　　\@ 生活系统_养蜂 ? [已生效] # [未启动] \@
+RESETCOLOR
+SIF 生活系统_鱼塘
+        SETCOLOR 0x00FF00
+PRINTFORML [14] 鱼塘系统　　\@ 生活系统_鱼塘 ? [已生效] # [未启动] \@
+RESETCOLOR
+PRINTFORML [ 0] 返回
 INPUT
 SELECTCASE RESULT
 	CASE 1 TO 4
@@ -93,12 +105,6 @@ SELECTCASE RESULT
 			ADD_CUSTOM_COM_SWITCH = 1
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
-	CASE 5
-		;读书系统改造开关（v2.1.3：实用书分区选择 + 等级化学习判定）
-		生活系统_读书 = !生活系统_读书
-		PRINTFORMW 读书系统已\@ 生活系统_读书 ? 启动 # 关闭 \@
-		CLEARLINE LINECOUNT - LOCAL
-		GOTO LIFE_MENU
 	CASE 6
 		;钓鱼难度切换
 		生活系统_钓鱼_难度 = !生活系统_钓鱼_难度
@@ -113,10 +119,12 @@ SELECTCASE RESULT
 		PRINTL 【酿酒】橡木酒桶独立发酵（酒桶0=原版酒虫，1~5由家具屋打造）
 		PRINTL 【钓鱼】小游戏：浮漂下沉时提竿；拉锯时选对方向与鱼角力，在它挣脱之前拉上来
 		PRINTL 　　　　　捕获的鱼会暂存于「隙间渔获」（主菜单[114] 或 行动菜单→[自定义]），查看详情后可确认获取鱼肉
-PRINTL 【读书】读实用书可自选书籍分区；学到经验的机会随技能等级递减、满级后一无所获（需开启读书系统）
+		PRINTL 【读书】读实用书可自选书籍分区；学到经验的机会随技能等级递减、满级后一无所获（需开启读书系统）
 		PRINTL 　　　　　[默认]时限较短更有挑战，[简单]时限宽松；钓鱼技艺越高反应时间越长
 		PRINTL
 		PRINTL ※ 咸鸭蛋产业链：鸭蛋 → 调合 → 清酒中腌制成熟 → 咸鸭蛋（需「养鸡+酿酒」同时开启）
+                PRINTL 【养蜂】蜂箱采蜜，为开花作物授粉；熊与妖精的事件等你发掘
+                PRINTL 【鱼塘】养鱼繁殖，卖鱼/取肉/收回隙间；鲟鱼卵入酒桶腌成鱼子酱
 		PRINTFORMW 按任意键返回……
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
@@ -130,8 +138,12 @@ PRINTL 【读书】读实用书可自选书籍分区；学到经验的机会随�
 			生活系统_酿酒 = 0
 			生活系统_钓鱼 = 0
 			生活系统_读书 = 0
+                        生活系统_料理委托改善 = 0
+                        生活系统_养蜂 = 0
+                        生活系统_鱼塘 = 0
 			生活系统_魔法联动 = 0
 			生活系统_武道大会 = 0
+			生活系统_音乐 = 0
 			PRINTFORMW 已关闭所有生活系统子系统
 			RETURN
 		ENDIF
@@ -149,9 +161,75 @@ PRINTL 【读书】读实用书可自选书籍分区；学到经验的机会随�
 		PRINTFORMW 天下第一武道大会已\@ 生活系统_武道大会 ? 启动 # 关闭 \@
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
+	CASE 11
+		;生活系统大修·音乐开关（与音乐补丁开关同时开启才播放）
+		生活系统_音乐 = !生活系统_音乐
+		PRINTFORMW 音乐开关已\@ 生活系统_音乐 ? 启动 # 关闭 \@（需音乐补丁开关同时开启）
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 12
+		;生活质量提升子菜单（读书 / 料理委托改善 / 巧克力转换）
+		CALL 生活系统_生活质量菜单
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 13
+		;养蜂系统开关（蜂箱采蜜/授粉/熊与妖精）
+		生活系统_养蜂 = !生活系统_养蜂
+		PRINTFORMW 养蜂系统已\@ 生活系统_养蜂 ? 启动 # 关闭 \@
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
+	CASE 14
+		;鱼塘系统开关（养鱼繁殖/鲟鱼卵鱼子酱）
+		生活系统_鱼塘 = !生活系统_鱼塘
+		PRINTFORMW 鱼塘系统已\@ 生活系统_鱼塘 ? 启动 # 关闭 \@
+		CLEARLINE LINECOUNT - LOCAL
+		GOTO LIFE_MENU
 	CASE 0
 		RETURN
 	CASEELSE
 		CLEARLINE LINECOUNT - LOCAL
 		GOTO LIFE_MENU
 ENDSELECT
+
+
+;--------------------------------------------------------
+; 生活质量提升  子菜单
+;--------------------------------------------------------
+@生活系统_生活质量菜单
+#LOCALSIZE 1
+#LOCALSSIZE 1
+LOCAL = LINECOUNT
+$QOL_MENU
+PRINTFORML 生活质量提升  设置
+PRINTFORML 收纳对游戏体验的小幅改善开关
+DRAWLINE
+SIF 生活系统_读书
+        SETCOLOR 0x00FF00
+PRINTFORML [1] 读书系统　　\@ 生活系统_读书 ? [已生效] # [未启动] \@
+RESETCOLOR
+SIF 生活系统_料理委托改善
+        SETCOLOR 0x00FF00
+PRINTFORML [2] 料理委托改善　\@ 生活系统_料理委托改善 ? [已生效] # [未启动] \@（委托17提示最佳菜谱/做菜高亮）
+RESETCOLOR
+SIF 生活系统_巧克力转换
+        SETCOLOR 0x00FF00
+PRINTFORML [3] 巧克力转换　\@ 生活系统_巧克力转换 ? [已生效] # [未启动] \@（黑雷神/高级巧克力 → 料理用巧克力）
+RESETCOLOR
+PRINTFORML [0] 返回
+INPUT
+SELECTCASE RESULT
+        CASE 1
+                生活系统_读书 = !生活系统_读书
+                PRINTFORMW 读书系统已\@ 生活系统_读书 ? 启动 # 关闭 \@
+        CASE 2
+                生活系统_料理委托改善 = !生活系统_料理委托改善
+                PRINTFORMW 料理委托改善已\@ 生活系统_料理委托改善 ? 启动 # 关闭 \@
+        CASE 3
+                生活系统_巧克力转换 = !生活系统_巧克力转换
+                PRINTFORMW 巧克力转换已\@ 生活系统_巧克力转换 ? 启动 # 关闭 \@
+        CASE 0
+                RETURN
+        CASEELSE
+ENDSELECT
+CLEARLINE LINECOUNT - LOCAL
+GOTO QOL_MENU

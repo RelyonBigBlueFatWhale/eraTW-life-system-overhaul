@@ -1,0 +1,308 @@
+﻿;========================================================
+; 鱼塘（自定义指令 515） 鱼塘系统入口
+; 位置：家庭菜园（与育苗一致）  二级菜单：先选鱼塘，再操作
+;========================================================
+@ADD_CUSTOM_COM515
+#LOCALSIZE 3
+#LOCALSSIZE 1
+LOCAL = LINECOUNT
+$鱼塘_主菜单
+PRINTFORML 【鱼塘】共{生活系统_鱼塘数量}口
+IF 生活系统_鱼塘建造中
+        PRINTFORML 　新鱼塘建造中还需{生活系统_鱼塘建造剩余}天
+ENDIF
+DRAWLINE
+FOR LOCAL:1, 1, 生活系统_鱼塘数量 + 1
+        IF 生活系统_鱼塘鱼种:(LOCAL:1) == ""
+                PRINTFORML [{LOCAL:1}] 空
+        ELSE
+                LOCAL:2 = 生活系统_鱼塘平均长度((LOCAL:1))
+                PRINTFORML [{LOCAL:1}] %生活系统_鱼塘鱼种:(LOCAL:1)% {生活系统_鱼塘鱼数:(LOCAL:1)}（平均{LOCAL:2}cm）
+                SIF 生活系统_鱼塘产卵剩:(LOCAL:1) > 0
+                        PRINTFORML 　（产卵期：{生活系统_鱼塘产卵剩:(LOCAL:1)}天）
+                SIF 生活系统_鱼塘孵化剩:(LOCAL:1) > 0
+                        PRINTFORML 　（孵化期：{生活系统_鱼塘孵化剩:(LOCAL:1)}天）
+                SIF 生活系统_鱼塘请求:(LOCAL:1) == 1
+                        PRINTFORML 　（有请求：%ITEMNAME_TR((生活系统_鱼塘请求物:(LOCAL:1)))%{生活系统_鱼塘请求量:(LOCAL:1)}）
+        ENDIF
+NEXT
+DRAWLINE
+PRINTL [1~5] 选择鱼塘　　[6] 建造新鱼塘　　[0] 返回
+INPUT
+SELECTCASE RESULT
+        CASE 1 TO 5
+                IF RESULT <= 生活系统_鱼塘数量
+                        CALL 鱼塘_子菜单(RESULT)
+                        CLEARLINE LINECOUNT - LOCAL
+                ENDIF
+                GOTO 鱼塘_主菜单
+        CASE 6
+                CALL 鱼塘_建造
+                CLEARLINE LINECOUNT - LOCAL
+                GOTO 鱼塘_主菜单
+        CASE 0
+                RETURN 1
+        CASEELSE
+                CLEARLINE 1
+                GOTO 鱼塘_主菜单
+ENDSELECT
+RETURN 1
+
+;--------------------------------------------------------
+; 鱼塘二级菜单
+;--------------------------------------------------------
+@鱼塘_子菜单(塘号)
+#DIM 塘号
+#LOCALSIZE 3
+#LOCALSSIZE 1
+LOCAL = LINECOUNT
+$鱼塘_操作
+IF 生活系统_鱼塘鱼种:塘号 == ""
+        PRINTFORML 【鱼塘{塘号}】空
+ELSE
+        LOCAL:2 = 生活系统_鱼塘平均长度(塘号)
+        PRINTFORML 【鱼塘{塘号}】%生活系统_鱼塘鱼种:塘号% {生活系统_鱼塘鱼数:塘号}（平均{LOCAL:2}cm）
+        SIF 生活系统_鱼塘产卵剩:塘号 > 0
+                PRINTFORML 　（产卵期：{生活系统_鱼塘产卵剩:塘号}天）
+        SIF 生活系统_鱼塘孵化剩:塘号 > 0
+                PRINTFORML 　（孵化期：{生活系统_鱼塘孵化剩:塘号}天）
+        SIF 生活系统_鱼塘请求:塘号 == 1
+                PRINTFORML 　（有请求：%ITEMNAME_TR((生活系统_鱼塘请求物:塘号))%{生活系统_鱼塘请求量:塘号}）
+ENDIF
+DRAWLINE
+PRINTL [1] 放入鱼　[2] 取出/卖鱼　[3] 喂食　[4] 完成请求　[0] 返回
+IF ITEM:鱼子酱打捞具 > 0 && 生活系统_鱼塘鱼种:塘号 == "鲟" && 生活系统_鱼塘产卵剩:塘号 > 0
+        PRINTL [5] 打捞鲟鱼卵
+ENDIF
+INPUT
+SELECTCASE RESULT
+        CASE 1
+                CALL 鱼塘_放入鱼(塘号)
+        CASE 2
+                CALL 鱼塘_取出(塘号)
+        CASE 3
+                CALL 鱼塘_喂食(塘号)
+        CASE 4
+                CALL 鱼塘_完成请求(塘号)
+        CASE 5
+                IF ITEM:鱼子酱打捞具 > 0 && 生活系统_鱼塘鱼种:塘号 == "鲟" && 生活系统_鱼塘产卵剩:塘号 > 0
+                        CALL 鱼塘_打捞鲟鱼卵(塘号)
+                ENDIF
+        CASE 0
+                RETURN 1
+        CASEELSE
+ENDSELECT
+CLEARLINE LINECOUNT - LOCAL
+GOTO 鱼塘_操作
+RETURN 1
+
+;--------------------------------------------------------
+; 鱼塘操作（指定塘号）
+;--------------------------------------------------------
+@鱼塘_放入鱼(塘号)
+#DIM 塘号
+#LOCALSIZE 7
+#LOCALSSIZE 1
+#DIM L_UIDS, 60
+#DIM L_SPECIES, 60
+#DIM L_SPCNT, 60
+IF 生活系统_鱼塘鱼数:塘号 >= 10
+        PRINTFORMW 这个鱼塘已经满了
+        RETURN
+ENDIF
+LOCAL:1 = QOL_FISH_INSTANCE_LIST(L_UIDS)
+IF LOCAL:1 <= 0
+        PRINTFORMW 隙间渔获里没有鱼先去钓鱼吧。
+        RETURN
+ENDIF
+LOCAL:2 = 0
+FOR LOCAL:3, 0, LOCAL:1
+        IF QOL_FISH_INSTANCE_GET(L_UIDS:(LOCAL:3))
+                SIF RESULT:0 <= 0
+                        CONTINUE
+                LOCAL:4 = RESULT:0
+                SIF 生活系统_鱼塘鱼种:塘号 != "" && 生活系统_鱼塘鱼种ID:塘号 != LOCAL:4
+                        CONTINUE
+                LOCAL:5 = -1
+                FOR LOCAL:6, 0, LOCAL:2
+                        SIF L_SPECIES:(LOCAL:6) == LOCAL:4
+                                LOCAL:5 = LOCAL:6
+                NEXT
+                IF LOCAL:5 < 0
+                        L_SPECIES:(LOCAL:2) = LOCAL:4
+                        L_SPCNT:(LOCAL:2) = 1
+                        LOCAL:2 ++
+                ELSE
+                        L_SPCNT:(LOCAL:5) ++
+                ENDIF
+        ENDIF
+NEXT
+IF LOCAL:2 == 0
+        PRINTFORMW 隙间里没有能放入该鱼塘的鱼种
+        RETURN
+ENDIF
+PRINTFORML 要放入哪种鱼？（鱼塘{塘号}，剩{10 - 生活系统_鱼塘鱼数:塘号}个槽位）
+FOR LOCAL:6, 0, LOCAL:2
+        PRINTFORML [{LOCAL:6+1}] %QOL_FISH_GET_NAME(L_SPECIES:(LOCAL:6))%（隙间{L_SPCNT:(LOCAL:6)}条）
+NEXT
+PRINTL [0] 取消
+INPUT
+LOCAL:4 = RESULT
+IF LOCAL:4 <= 0 || LOCAL:4 > LOCAL:2
+        RETURN
+ENDIF
+LOCAL:4 = L_SPECIES:(LOCAL:4 - 1)
+IF 生活系统_鱼塘鱼种:塘号 != "" && 生活系统_鱼塘鱼种ID:塘号 != LOCAL:4
+        PRINTFORMW 鱼塘里已经养着别的鱼了
+        RETURN
+ENDIF
+LOCAL:5 = 0
+FOR LOCAL:3, 0, LOCAL:1
+        IF 生活系统_鱼塘鱼数:塘号 >= 10
+                BREAK
+        ENDIF
+        IF QOL_FISH_INSTANCE_GET(L_UIDS:(LOCAL:3))
+                SIF RESULT:0 != LOCAL:4
+                        CONTINUE
+                生活系统_鱼塘长度:塘号:(生活系统_鱼塘鱼数:塘号) = RESULT:1
+                LOCAL:6 = QOL_FISH_INSTANCE_REMOVE(L_UIDS:(LOCAL:3))
+                生活系统_鱼塘鱼数:塘号 ++
+                LOCAL:5 ++
+        ENDIF
+NEXT
+IF LOCAL:5 > 0
+        生活系统_鱼塘鱼种ID:塘号 = LOCAL:4
+        生活系统_鱼塘鱼种:塘号 = %QOL_FISH_GET_NAME(LOCAL:4)%
+        PRINTFORMW 放入了{LOCAL:5}条%生活系统_鱼塘鱼种:塘号%！
+ELSE
+        PRINTFORMW 没有放入任何鱼
+ENDIF
+RETURN
+
+@鱼塘_取出(塘号)
+#DIM 塘号
+#LOCALSIZE 3
+#LOCALSSIZE 1
+IF 生活系统_鱼塘鱼数:塘号 <= 0
+        PRINTFORMW 这个鱼塘没有养鱼
+        RETURN
+ENDIF
+PRINTFORML 鱼塘{塘号}：%生活系统_鱼塘鱼种:塘号%{生活系统_鱼塘鱼数:塘号}
+PRINTL [1] 收回隙间渔获　[2] 取鱼肉　[3] 卖鱼　[0] 取消
+INPUT
+SELECTCASE RESULT
+        CASE 1
+                FOR LOCAL:1, 0, 生活系统_鱼塘鱼数:塘号
+                        LOCAL:2 = QOL_FISH_INSTANCE_ADD(生活系统_鱼塘鱼种ID:塘号, 生活系统_鱼塘长度:塘号:(LOCAL:1))
+                NEXT
+                CALL 鱼塘_清空(塘号)
+                PRINTFORMW 把鱼都收回了隙间渔获。
+        CASE 2
+                IF ITEM:魚 + 生活系统_鱼塘鱼数:塘号 > 99
+                        PRINTFORMW 背包里的鱼放不下了
+                        RETURN
+                ENDIF
+                ITEM:魚 += 生活系统_鱼塘鱼数:塘号
+                PRINTFORMW 取出了{生活系统_鱼塘鱼数:塘号}条鱼肉。
+                CALL 鱼塘_清空(塘号)
+        CASE 3
+                CALL 生活系统_鱼塘卖鱼(塘号, 生活系统_鱼塘鱼数:塘号)
+        CASEELSE
+ENDSELECT
+RETURN
+
+@鱼塘_清空(塘号)
+#DIM 塘号
+#LOCALSIZE 1
+#LOCALSSIZE 1
+生活系统_鱼塘鱼数:塘号 = 0
+生活系统_鱼塘鱼种:塘号 =
+生活系统_鱼塘鱼种ID:塘号 = 0
+生活系统_鱼塘产卵剩:塘号 = 0
+生活系统_鱼塘孵化剩:塘号 = 0
+生活系统_鱼塘繁殖剩:塘号 = 0
+RETURN
+
+@鱼塘_打捞鲟鱼卵(塘号)
+#DIM 塘号
+#LOCALSIZE 2
+#LOCALSSIZE 1
+IF ITEM:鱼子酱打捞具 <= 0
+        PRINTFORMW 没有鱼子酱打捞具（家具屋有售）
+        RETURN
+ENDIF
+IF 生活系统_鱼塘鱼种:塘号 != "鲟" || 生活系统_鱼塘产卵剩:塘号 <= 0
+        PRINTFORMW 这个鱼塘没有处于产卵期的鲟鱼
+        RETURN
+ENDIF
+CALL GET_ITEM("鲟鱼卵", 1, 1)
+生活系统_鱼塘产卵剩:塘号 = 0
+生活系统_鱼塘孵化剩:塘号 = 0
+生活系统_鱼塘繁殖剩:塘号 = 生活系统_鱼塘产卵日数("鲟")
+PRINTFORMW 你打捞起一份鲟鱼卵！（可放入酒桶腌制14天制成鱼子酱）
+RETURN
+
+@鱼塘_喂食(塘号)
+#DIM 塘号
+#LOCALSIZE 2
+#LOCALSSIZE 1
+IF ITEM:虫 <= 0 && ITEM:鱼粕 <= 0
+        PRINTFORMW 没有饲料（虫/鱼粕）
+        RETURN
+ENDIF
+IF 生活系统_鱼塘鱼数:塘号 <= 0
+        PRINTFORMW 这个鱼塘没有养鱼
+        RETURN
+ENDIF
+IF ITEM:虫 > 0
+        ITEM:虫 -= 1
+ELSE
+        ITEM:鱼粕 -= 1
+ENDIF
+生活系统_鱼塘成长剩:塘号 = MAX(生活系统_鱼塘成长剩:塘号, 2)
+PRINTFORML 你给鱼塘{塘号}的鱼喂了食，它们欢快地争抢起来！
+RETURN
+
+@鱼塘_完成请求(塘号)
+#DIM 塘号
+#LOCALSIZE 2
+#LOCALSSIZE 1
+CALL 生活系统_鱼塘完成请求(塘号)
+RETURN
+
+@鱼塘_建造
+#LOCALSIZE 1
+#LOCALSSIZE 1
+IF 生活系统_鱼塘建造中
+        PRINTFORMW 已经有鱼塘在建造中了
+        RETURN
+ENDIF
+IF 生活系统_鱼塘数量 >= 5
+        PRINTFORMW 鱼塘数量已达上限（5口）
+        RETURN
+ENDIF
+IF MONEY < 300000
+        PRINTFORMW 建造新鱼塘需要30万元
+        RETURN
+ENDIF
+MONEY -= 300000
+生活系统_鱼塘建造中 = 1
+生活系统_鱼塘建造剩余 = 15
+PRINTFORMW 开始建造新鱼塘预计需要15天（天堂制造可加速）。
+RETURN
+
+;--------------------------------------------------------
+; 可用性门控（与家庭菜园相同）
+;--------------------------------------------------------
+@ADD_CUSTOM_COM_ABLE515
+#LOCALSIZE 1
+#LOCALSSIZE 1
+SIF !生活系统_鱼塘
+        RETURN 0
+SIF !家庭菜園可(CFLAG:MASTER:現在位置) && !IS_GAP_GUEST(MASTER)
+        RETURN 0
+RETURN 1
+
+@Custom_COM515_NAME
+#FUNCTIONS
+RETURNF "鱼塘"

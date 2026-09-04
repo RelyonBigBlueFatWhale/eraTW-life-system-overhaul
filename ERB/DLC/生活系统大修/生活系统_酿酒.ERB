@@ -101,11 +101,14 @@ ENDIF
 醸造量 = GETMETH_INT(0, "酒データ", 酒ID, "醸造数")
 行数 = LINECOUNT
 
+;显示酿造指南（需要酒造家天赋）
+CALL BREWING_GUIDE
 ;显示当前桶的状态（酒桶0=原版酒虫）
 IF 桶号 == 0
 	PRINTFORML %CALLNAME:MASTER%往放着酒虫的瓶子里窥去
 	PRINTFORML 酒桶0（酒虫瓶）：装满了%VAR_FERMENT%…（发酵天数{DAY:10}）
 ELSE
+	PRINTFORML %CALLNAME:MASTER%往放着酒虫的瓶子里窥去
 	PRINTFORML 酒桶{桶号}：桶里装满了%VAR_FERMENT%…（发酵天数{DAY:10}）
 ENDIF
 DRAWLINE
@@ -144,7 +147,7 @@ SELECTCASE RESULT
 	CASE 0
 		;什么也不做/返回——写回当前桶状态（酒桶0即酒虫本身，写回仅作备份）
 		酒桶_内容物:桶号 = %VAR_FERMENT%
-		酒桶_天数:桶号 = DAY:10
+		酒桶_天数:桶号 = MAX(酒桶_天数:桶号, DAY:10)
 		;退出前：若当前是酒桶1～5，把全局恢复为酒桶0（原版酒虫）的状态，
 		;避免退出后 @酒造 用其他桶的内容推进原版全局；随后清除切换备份
 		IF 桶号 > 0
@@ -258,7 +261,7 @@ SELECTCASE RESULT
 	CASE 5
 		;翻页：上一个酒桶（写回当前桶状态；离开酒桶0时即备份其全局状态）
 		酒桶_内容物:桶号 = %VAR_FERMENT%
-		酒桶_天数:桶号 = DAY:10
+		酒桶_天数:桶号 = MAX(酒桶_天数:桶号, DAY:10)
 		桶号 --
 		切换中 = 1
 		CLEARLINE LINECOUNT - 行数
@@ -266,7 +269,7 @@ SELECTCASE RESULT
 	CASE 6
 		;翻页：下一个酒桶（写回当前桶状态；离开酒桶0时即备份其全局状态）
 		酒桶_内容物:桶号 = %VAR_FERMENT%
-		酒桶_天数:桶号 = DAY:10
+		酒桶_天数:桶号 = MAX(酒桶_天数:桶号, DAY:10)
 		桶号 ++
 		切换中 = 1
 		CLEARLINE LINECOUNT - 行数

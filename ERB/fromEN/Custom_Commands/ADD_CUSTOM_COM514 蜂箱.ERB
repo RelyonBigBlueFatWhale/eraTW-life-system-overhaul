@@ -1,0 +1,153 @@
+﻿;========================================================
+; 蜂箱（自定义指令 514） 养蜂系统入口
+; 位置：家庭菜园（与育苗一致）  二级菜单：先选蜂箱，再操作
+;========================================================
+@ADD_CUSTOM_COM514
+#LOCALSIZE 2
+#LOCALSSIZE 1
+LOCAL = LINECOUNT
+$蜂箱_主菜单
+PRINTFORML 【蜂箱】共{ITEM:蜂箱}个
+DRAWLINE
+IF ITEM:蜂箱 <= 0
+        PRINTL 还没有蜂箱。去家具屋打造一个吧。
+ELSE
+        FOR LOCAL:1, 0, ITEM:蜂箱
+                IF 生活系统_蜂箱有蜂:(LOCAL:1)
+                        IF 生活系统_蜂箱蜜:(LOCAL:1) >= 10
+                                PRINTFORML [{LOCAL:1+1}] 蜂蜜已满（{生活系统_蜂箱蜜:(LOCAL:1)}/10）
+                        ELSE
+                                PRINTFORML [{LOCAL:1+1}] 蜜蜂忙碌着（蜜{生活系统_蜂箱蜜:(LOCAL:1)} 进度{生活系统_蜂箱进度:(LOCAL:1)}/10）
+                        ENDIF
+                ELSE
+                        PRINTFORML [{LOCAL:1+1}] 这个蜂箱里没有蜜蜂
+                ENDIF
+        NEXT
+ENDIF
+DRAWLINE
+PRINTFORML [1~8] 选择蜂箱　　[0] 返回
+INPUT
+SELECTCASE RESULT
+        CASE 1 TO 8
+                IF RESULT <= ITEM:蜂箱
+                        CALL 蜂箱_子菜单(RESULT - 1)
+                        CLEARLINE LINECOUNT - LOCAL
+                ENDIF
+                GOTO 蜂箱_主菜单
+        CASE 0
+                RETURN 1
+        CASEELSE
+                CLEARLINE 1
+                GOTO 蜂箱_主菜单
+ENDSELECT
+RETURN 1
+
+;--------------------------------------------------------
+; 蜂箱二级菜单
+;--------------------------------------------------------
+@蜂箱_子菜单(箱号)
+#DIM 箱号
+#LOCALSIZE 2
+#LOCALSSIZE 1
+LOCAL = LINECOUNT
+$蜂箱_操作
+IF 生活系统_蜂箱有蜂:箱号
+        IF 生活系统_蜂箱蜜:箱号 >= 10
+                PRINTFORML 【蜂箱{箱号+1}】蜂蜜已满（{生活系统_蜂箱蜜:箱号}/10）
+        ELSE
+                PRINTFORML 【蜂箱{箱号+1}】蜜蜂忙碌着（蜜{生活系统_蜂箱蜜:箱号} 进度{生活系统_蜂箱进度:箱号}/10）
+        ENDIF
+ELSE
+        PRINTFORML 【蜂箱{箱号+1}】这个蜂箱里没有蜜蜂
+ENDIF
+DRAWLINE
+PRINTL [1] 收蜜　　[2] 放入蜂王　　[3] 喂糖水　　[0] 返回
+INPUT
+SELECTCASE RESULT
+        CASE 1
+                CALL 蜂箱_收蜜(箱号)
+        CASE 2
+                CALL 蜂箱_放蜂王(箱号)
+        CASE 3
+                CALL 蜂箱_喂糖水(箱号)
+        CASE 0
+                RETURN 1
+        CASEELSE
+ENDSELECT
+CLEARLINE LINECOUNT - LOCAL
+GOTO 蜂箱_操作
+RETURN 1
+
+;--------------------------------------------------------
+; 蜂箱操作（指定箱号）
+;--------------------------------------------------------
+@蜂箱_收蜜(箱号)
+#DIM 箱号
+#LOCALSIZE 2
+#LOCALSSIZE 1
+IF 生活系统_蜂箱蜜:箱号 <= 0
+        PRINTFORMW 这个蜂箱里一点蜜都没有
+        RETURN
+ENDIF
+CALL 生活系统_蜂箱收蜜(箱号)
+LOCAL = RESULT
+IF 生活系统_彼岸花开()
+        PRINTFORMW 收得了{LOCAL}份蜂蜜，其中有一份彼岸花蜜！
+ELSE
+        PRINTFORMW 收得了{LOCAL}份蜂蜜！
+ENDIF
+RETURN
+
+@蜂箱_放蜂王(箱号)
+#DIM 箱号
+#LOCALSIZE 1
+#LOCALSSIZE 1
+IF ITEM:蜂王 <= 0
+        PRINTFORMW 没有蜂王（野外采集蜂蜜时有概率发现蜂王）
+        RETURN
+ENDIF
+IF 生活系统_蜂箱有蜂:箱号
+        PRINTFORMW 这个蜂箱已经有蜜蜂了
+        RETURN
+ENDIF
+ITEM:蜂王 -= 1
+生活系统_蜂箱有蜂:箱号 = 1
+PRINTFORMW 你把蜂王放进蜂箱{箱号+1}，蜂群开始忙碌起来！
+RETURN
+
+@蜂箱_喂糖水(箱号)
+#DIM 箱号
+#LOCALSIZE 1
+#LOCALSSIZE 1
+IF ITEM:糖 <= 0 && ITEM:甜味料 <= 0
+        PRINTFORMW 没有糖或甜味料
+        RETURN
+ENDIF
+IF !生活系统_蜂箱有蜂:箱号
+        PRINTFORMW 这个蜂箱里没有蜜蜂
+        RETURN
+ENDIF
+IF ITEM:糖 > 0
+        ITEM:糖 -= 1
+ELSE
+        ITEM:甜味料 -= 1
+ENDIF
+生活系统_蜂箱进度:箱号 += 2
+PRINTFORML 你给蜂箱{箱号+1}的蜜蜂喂了糖水，蜜蜂们干劲十足！
+RETURN
+
+;--------------------------------------------------------
+; 可用性门控（与家庭菜园相同）
+;--------------------------------------------------------
+@ADD_CUSTOM_COM_ABLE514
+#LOCALSIZE 1
+#LOCALSSIZE 1
+SIF !生活系统_养蜂
+        RETURN 0
+SIF !家庭菜園可(CFLAG:MASTER:現在位置) && !IS_GAP_GUEST(MASTER)
+        RETURN 0
+RETURN 1
+
+@Custom_COM514_NAME
+#FUNCTIONS
+RETURNF "蜂箱"

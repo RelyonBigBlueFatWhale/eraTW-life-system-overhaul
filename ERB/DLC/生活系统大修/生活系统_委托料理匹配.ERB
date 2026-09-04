@@ -1,0 +1,97 @@
+﻿;========================================================
+; 生活系统大修 - 委托17「模糊记忆的料理」最佳菜谱匹配
+;
+; 委托17判定 = 标签匹配数10 + 客户端料理评价基础分（与菜谱无关）。
+; 因此只需最大化「标签匹配数」。本模块：
+;   - 单趟扫描已有菜谱，复用原版 IRAI_一般17_ジャンル評価 计分
+;   - 优先「当前可制作」的最高匹配菜谱，否则退回已存在菜谱
+;========================================================
+
+;--------------------------------------------------------
+; 最佳菜谱（普通函数：内部有 CALL，调用方用 CALL + RESULT 读取）
+; 返回：RESULT=菜谱编号(-1无)  RESULT:1=匹配数  RESULTS=名称  RESULTS:1=种类
+;--------------------------------------------------------
+@生活系统_委托料理_最佳菜谱(味要求)
+#LOCALSIZE 4
+#LOCALSSIZE 1
+#DIMS DYNAMIC 味要求
+#DIM DYNAMIC 最佳编号
+#DIM DYNAMIC 最佳匹配
+#DIM DYNAMIC 可制作编号
+#DIM DYNAMIC 可制作匹配
+最佳编号 = -1
+最佳匹配 = -1
+可制作编号 = -1
+可制作匹配 = -1
+FOR LOCAL, 101, 400 + CHARANUM
+        SIF !QOL_DISH_HAS_DATA(LOCAL)
+                CONTINUE
+        CALL DISHDATA(LOCAL, "軽食", 0, 1)
+        SIF DISH_NAME == ""
+                CONTINUE
+        ;保存可制作状态（ジャンル評価 表达式调用会改写 RESULT）
+        LOCAL:2 = RESULT
+        LOCAL:1 = IRAI_一般17_ジャンル評価(DISH_TASTE, 味要求)
+        IF LOCAL:1 > 最佳匹配
+                最佳匹配 = LOCAL:1
+                最佳编号 = LOCAL
+        ENDIF
+        IF LOCAL:2 == 10 && LOCAL:1 > 可制作匹配
+                可制作匹配 = LOCAL:1
+                可制作编号 = LOCAL
+        ENDIF
+NEXT
+IF 可制作编号 > 0
+        RESULT = 可制作编号
+        RESULT:1 = 可制作匹配
+ELSE
+        RESULT = 最佳编号
+        RESULT:1 = 最佳匹配
+ENDIF
+IF RESULT > 0
+        LOCAL:3 = RESULT
+        LOCAL:2 = RESULT:1
+        CALL DISHDATA(LOCAL:3, "軽食", 0, 1)
+        RESULTS = %DISH_NAME%
+        RESULTS:1 = %RESULTS:1%
+        RESULT = LOCAL:3
+        RESULT:1 = LOCAL:2
+ELSE
+        RESULTS =
+        RESULTS:1 =
+ENDIF
+RETURN RESULT
+
+;--------------------------------------------------------
+; 进行中的委托17口味要求（#FUNCTIONS）
+;--------------------------------------------------------
+@生活系统_委托17_进行中味要求()
+#FUNCTIONS
+#LOCALSIZE 1
+#LOCALSSIZE 1
+FOR LOCAL, 0, VARSIZE("IRAI_SLOT")
+        SIF IRAI_SLOT:LOCAL % 1000 != 17
+                CONTINUE
+        RETURNF IRAI_STR:LOCAL
+NEXT
+RETURNF
+
+;--------------------------------------------------------
+; 全部菜谱的最高匹配标签数（普通函数：内部有 CALL）
+;--------------------------------------------------------
+@生活系统_委托17_最高匹配分(味要求)
+#LOCALSIZE 3
+#LOCALSSIZE 1
+#DIMS DYNAMIC 味要求
+LOCAL = -1
+FOR LOCAL:1, 101, 400 + CHARANUM
+        SIF !QOL_DISH_HAS_DATA(LOCAL:1)
+                CONTINUE
+        CALL DISHDATA(LOCAL:1, "軽食", 0, 1)
+        SIF DISH_NAME == ""
+                CONTINUE
+        LOCAL:2 = IRAI_一般17_ジャンル評価(DISH_TASTE, 味要求)
+        SIF LOCAL:2 > LOCAL
+                LOCAL = LOCAL:2
+NEXT
+RETURN LOCAL
