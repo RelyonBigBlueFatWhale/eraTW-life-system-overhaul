@@ -298,7 +298,7 @@ IF RESULT && DISH_SPECIAL_FILTER(SEARCH_INPUT, SEARCH_TYPE)
 		SETCOLOR C_RED
 	ELSEIF SELECT_MENU == DISH_NUM
 		SETCOLOR C_AQUA
-	ELSEIF 生活系统_料理委托改善 && 生活系统_委托17_最高匹配 >= 0 && LOCAL:1 == 生活系统_委托17_最高匹配
+	ELSEIF 生活系统_料理委托改善 && 生活系统_委托17_最高匹配 > 0 && LOCAL:1 > 0 && LOCAL:1 == 生活系统_委托17_最高匹配
 		SETCOLOR C_YELLOW
 	ELSEIF RESULT < 10
 		SETCOLOR C_GRAY

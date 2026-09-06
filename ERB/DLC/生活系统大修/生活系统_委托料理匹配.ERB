@@ -13,7 +13,7 @@
 ;--------------------------------------------------------
 @生活系统_委托料理_最佳菜谱(味要求)
 #LOCALSIZE 4
-#LOCALSSIZE 1
+#LOCALSSIZE 3
 #DIMS DYNAMIC 味要求
 #DIM DYNAMIC 最佳编号
 #DIM DYNAMIC 最佳匹配
@@ -23,6 +23,9 @@
 最佳匹配 = -1
 可制作编号 = -1
 可制作匹配 = -1
+;保存全局料理状态，防止显示最佳菜谱后向完成判定泄露 DISH_NAME/DISH_TASTE
+LOCALS:1 = %DISH_NAME%
+LOCALS:2 = %DISH_TASTE%
 FOR LOCAL, 101, 400 + CHARANUM
         SIF !QOL_DISH_HAS_DATA(LOCAL)
                 CONTINUE
@@ -60,6 +63,8 @@ ELSE
         RESULTS =
         RESULTS:1 =
 ENDIF
+DISH_NAME = %LOCALS:1%
+DISH_TASTE = %LOCALS:2%
 RETURN RESULT
 
 ;--------------------------------------------------------
