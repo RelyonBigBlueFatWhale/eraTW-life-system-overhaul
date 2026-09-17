@@ -1,0 +1,62 @@
+﻿;========================================================
+; 生活系统大修 - 学习与教育系统改进  辅助
+; 1. 学费调价：按同行人数加算（1 + 档位系数  同行数）
+;    档位1 = 每人+50%；档位2 = 每人+100%；档位0 = 不变
+; 2. 同伴经验：授课经验同时给予同行的少女（CFLAG:同行>0）
+;========================================================
+
+@生活系统_教育_调价(学费)
+#FUNCTION
+#LOCALSIZE 2
+#LOCALSSIZE 1
+#DIM 学费
+IF 生活系统_学习教育 && 生活系统_教育_价格档 > 0
+        LOCAL = 0
+        FOR LOCAL:1, 0, CHARANUM
+                SIF CFLAG:(LOCAL:1):同行 <= 0
+                        CONTINUE
+                LOCAL ++
+        NEXT
+        IF 生活系统_教育_价格档 == 1
+                RETURNF 学费 * (2 + LOCAL) / 2
+        ELSE
+                RETURNF 学费 * (1 + LOCAL)
+        ENDIF
+ENDIF
+RETURNF 学费
+
+@生活系统_教育_同伴经验(技能, 数量)
+#LOCALSIZE 2
+#LOCALSSIZE 1
+#DIMS DYNAMIC 技能
+#DIM DYNAMIC 数量
+IF 生活系统_教育_同伴经验
+        FOR LOCAL, 0, CHARANUM
+                SIF CFLAG:LOCAL:同行 <= 0
+                        CONTINUE
+                CALL AddEXP(技能, LOCAL, 数量)
+        NEXT
+ENDIF
+RETURN 0
+
+
+@生活系统_教育_同伴状态(体力扣, 気力扣, 额外体力回 = 0, 额外気力回 = 0)
+#LOCALSIZE 2
+#LOCALSSIZE 1
+#DIM 体力扣
+#DIM 気力扣
+#DIM 额外体力回
+#DIM 额外気力回
+IF 生活系统_教育_同伴经验
+        FOR LOCAL, 0, CHARANUM
+                SIF CFLAG:LOCAL:同行 <= 0
+                        CONTINUE
+                CALL RECOVER(LOCAL, 体力扣, "体力", "跟随学习")
+                CALL RECOVER(LOCAL, 気力扣, "気力", "跟随学习")
+                SIF 额外体力回
+                        CALL RECOVER(LOCAL, 额外体力回, "体力", "跟随学习")
+                SIF 额外気力回
+                        CALL RECOVER(LOCAL, 额外気力回, "気力", "跟随学习")
+        NEXT
+ENDIF
+RETURN 0
