@@ -1,0 +1,39 @@
+﻿;========================================================
+; 倒掉饭菜（自定义指令 516）
+; 入口：生活系统大修生活质量提升（携带料理时可用）
+; 效果：立刻清空玩家携带的料理
+;========================================================
+@ADD_CUSTOM_COM516
+#LOCALSIZE 1
+#LOCALSSIZE 1
+IF DISH_NAME == ""
+        PRINTFORMW 你现在没有携带料理
+        RETURN 1
+ENDIF
+CALL ASK_YN, "确认倒掉", "再想想"
+IF RESULT != 0
+        RETURN 1
+ENDIF
+PRINTFORML 你把%DISH_NAME%倒进了垃圾堆
+DISH_NAME =
+DISH_TYPE =
+DISH_TASTE =
+DISH_COMMENT =
+VARSET DISH_ING
+DISH_TIME = 0
+DISH_MAXLIMIT = 0
+PRINTFORMW 携带的料理已全部倒掉。
+RETURN 1
+
+@ADD_CUSTOM_COM_ABLE516
+#LOCALSIZE 1
+#LOCALSSIZE 1
+SIF !生活系统_倒掉饭菜
+        RETURN 0
+SIF DISH_NAME == ""
+        RETURN 0
+RETURN 1
+
+@Custom_COM516_NAME
+#FUNCTIONS
+RETURNF "倒掉饭菜"
