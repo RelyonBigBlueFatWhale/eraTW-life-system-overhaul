@@ -1,4 +1,4 @@
-;採集
+﻿;採集
 @COM445
 #DIM 採集物
 #DIM 採集パワー
@@ -152,14 +152,19 @@ ELSE
 		LOCALS = %ITEMNAME:採集物%
 		CALL GET_ITEM(LOCALS, TFLAG:194 , 2)
 		;生活系统大修：虹龙洞采到龙珠时极低概率（1%）额外获得龙蛋（养鸡子系统开关控制）
-		IF 生活系统_养鸡 && 採集物 == GETNUM(ITEM, "龍珠") && !RAND:100
+		IF 生活系统_养鸡 && LOCALS == "龍珠" && !RAND:100
 			PRINTFORML 在龙珠之间，发现了一枚散发着虹色光辉的龙蛋！
 			CALL GET_ITEM("龙蛋", 1, 2)
 		ENDIF
         ;生活系统大修：采集获得蜂蜜时30%概率发现蜂王（养蜂开关控制）
-        IF 生活系统_养蜂 && 採集物 == GETNUM(ITEM, "蜂蜜") && RAND:10 < 3
-                PRINTFORML 在蜂蜜之间，发现了一小盘带着蜂王的蜂巢！
-                CALL GET_ITEM("蜂王", 1, 2)
+        IF 生活系统_养蜂 && LOCALS == "蜂蜜"
+                生活系统_蜂王保底 ++
+                ;30% 概率发现蜂王；连续4次未出则保底触发（期望概率高于设定）
+                IF RAND:10 < 3 || 生活系统_蜂王保底 >= 4
+                	PRINTFORML 在蜂蜜之间，发现了一小盘带着蜂王的蜂巢！
+                	CALL GET_ITEM("蜂王", 1, 2)
+                	生活系统_蜂王保底 = 0
+                ENDIF
         ENDIF
 	ENDIF
 ENDIF
