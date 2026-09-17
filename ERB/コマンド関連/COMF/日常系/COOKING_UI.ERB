@@ -49,12 +49,9 @@ ELSE
         ;生活系统大修料理委托改善：预计算进行中委托17的最高匹配标签数
         生活系统_委托17_味要求 =
         生活系统_委托17_最高匹配 = -1
-        IF 生活系统_料理委托改善
-                生活系统_委托17_味要求 = 生活系统_委托17_进行中味要求()
-                IF STRLENS(生活系统_委托17_味要求) > 0
-                        CALL 生活系统_委托17_最高匹配分(生活系统_委托17_味要求)
-                        生活系统_委托17_最高匹配 = RESULT
-                ENDIF
+        IF 生活系统_料理委托改善 && 生活系统_委托17_进行中味要求()
+                CALL 生活系统_委托17_最高匹配分(生活系统_委托17_味要求)
+                生活系统_委托17_最高匹配 = RESULT
         ENDIF
 	MENUCOUNT = 0
 	PRINTFORM ＜MENU＞　
@@ -298,8 +295,9 @@ IF RESULT && DISH_SPECIAL_FILTER(SEARCH_INPUT, SEARCH_TYPE)
 		SETCOLOR C_RED
 	ELSEIF SELECT_MENU == DISH_NUM
 		SETCOLOR C_AQUA
-	ELSEIF 生活系统_料理委托改善 && 生活系统_委托17_最高匹配 > 0 && LOCAL:1 > 0 && LOCAL:1 == 生活系统_委托17_最高匹配
-		SETCOLOR C_YELLOW
+	ELSEIF 生活系统_料理委托改善 && 生活系统_委托17_最高匹配 >= 0 && LOCAL:1 == 生活系统_委托17_最高匹配
+		;委托17进行中且该菜谱匹配数最高  亮蓝色高亮
+		SETCOLOR 0x00BFFF
 	ELSEIF RESULT < 10
 		SETCOLOR C_GRAY
 	ELSEIF STRCOUNT(DISH_TASTE, "旬/") || STRCOUNT(DISH_TASTE, "縁起物/") || STRCOUNT(DISH_TASTE, "台風炸丸子/") && HIGHLIGHTED == ""

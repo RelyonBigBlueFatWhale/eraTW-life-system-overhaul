@@ -71,15 +71,18 @@ RETURN RESULT
 ; 进行中的委托17口味要求（#FUNCTIONS）
 ;--------------------------------------------------------
 @生活系统_委托17_进行中味要求()
-#FUNCTIONS
+#FUNCTION
 #LOCALSIZE 1
 #LOCALSSIZE 1
+;扫描委托槽；命中委托17时把口味要求写入全局变量 生活系统_委托17_味要求 并返回1
+生活系统_委托17_味要求 =
 FOR LOCAL, 0, VARSIZE("IRAI_SLOT")
         SIF IRAI_SLOT:LOCAL % 1000 != 17
                 CONTINUE
-        RETURNF IRAI_STR:LOCAL
+        生活系统_委托17_味要求 = %IRAI_STR:LOCAL%
+        RETURNF 1
 NEXT
-RETURNF
+RETURNF 0
 
 ;--------------------------------------------------------
 ; 全部菜谱的最高匹配标签数（普通函数：内部有 CALL）
