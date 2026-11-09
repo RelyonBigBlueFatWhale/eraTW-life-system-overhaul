@@ -79,6 +79,11 @@ IF !MAGIC_DLC
 	採集パワーM = 10 + TALENT:MASTER:採集Lv * 10 + ABL:MASTER:教養 * 5 + TFLAG:幸運補正 * 10 + アビカ採集補正 * 10
 ELSE
 	採集パワーM = 10 + TALENT:MASTER:採集Lv * 10 + ABL:MASTER:教養 * 5 + MAGIC_SuccessRate()/2 + TALENT:MASTER:神性 * 10
+	;生活系统大修修复：恢复被前版本误删的上游两段（女祭司采集加成 / 采集力下限 10）
+	SIF M_TALENT:MASTER:女祭司
+		採集パワーM += M_TALENT:MASTER:女祭司 * 10
+	SIF 採集パワーM < 10
+		採集パワーM = 10
 ENDIF
 SIF ITEM:108
 	採集パワーM += 10
