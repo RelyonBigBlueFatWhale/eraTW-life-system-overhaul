@@ -40,10 +40,11 @@
 
 ## 验证状态
 
-- 旧基线（`main`）侧：`Emuera_skiaV12_x64.exe -Debug` boot **0 警告 / 0 错误**；同一批修复已在旧基线跑通。
-- develop 侧：**仅做了静态核验**（逐文件与 develop 原文比对 + 结构平衡 + SIF 扫描）。
-  受网络限制（gitgud 大包拉取超时），尚未在完整 develop 树上 boot 实测——首次合入前请在本机跑一遍：
-  `Emuera_skiaV12_x64.exe -Debug` → 等 90 秒 → 看 `debug/console.log` 有无 警告/错误。
+- 旧基线（`main`）侧：`Emuera_skiaV12_x64.exe -Debug` boot **0 警告 / 0 错误**（v2.32.1~v2.32.4 每版都跑）。
+- develop 侧：**已实测 boot 通过**。2026-11-09 用 blobless 稀疏克隆拉下 develop @ `b4d9af1`（引擎 `Emuera_skiaV17.2_x64.exe`），
+  覆盖本分支 10 个文件后 `-Debug` 启动 95 秒 → `debug/console.log` 197 行、**0 警告 / 0 错误**，优雅退出 code=0。
+  - 这 10 个文件在 `c60a2007` 与 `b4d9af1` 两个提交上内容一致（逐行比对差异 0 行），所以补丁不会回退上游改动。
+  - 该次验证只检出 `ERB/CSV/plugins`（未含 `resources/` 资源），即验证的是**解析/编译/启动链路**，不是立绘与音效。
 
 ## 上游尚未修复、本分支也未改动的观察项
 
