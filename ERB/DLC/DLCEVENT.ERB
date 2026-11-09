@@ -7,7 +7,12 @@
 #DIM NUM
 VARSET WATERED
     IF AUTOWATER
-        NUM = 1 + FLAG:畑拡張
+        ;生活系统大修：DLC 开启时畝数=基础畝数+开荒数，原「1+畑拡張」会让开荒出来的畝不参与自动洒水/成熟提示
+        IF 生活系统_种地
+            NUM = 生活系统_畝数()
+        ELSE
+            NUM = 1 + FLAG:畑拡張
+        ENDIF
         FOR TMP, 0, NUM
             IF PLANT_GROW:TMP == 10
                 WATERED:0 = 1
