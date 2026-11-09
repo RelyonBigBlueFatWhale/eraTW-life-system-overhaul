@@ -1,4 +1,4 @@
-@F酒データ_WATER_GENERAL(ARG, O_DATA, V_NAME)
+﻿@F酒データ_WATER_GENERAL(ARG, O_DATA, V_NAME)
 #FUNCTIONS
 #LOCALSIZE 1
 #LOCALSSIZE 1
@@ -826,12 +826,12 @@ CASE "TASTE"
 	CASE "ITEM：待腌制的咸鸭蛋"
 		CALLF MAKE_STR(V_NAME, "待腌制的咸鸭蛋")
 	CASE "QUANTITY：待腌制的咸鸭蛋"
+		CALLF MAKE_INT(V_NAME, 20)
 	;生活系统大修：鲟鱼卵（加入清酒14天后腌成鱼子酱）
 	CASE "ITEM：鲟鱼卵"
 		CALLF MAKE_STR(V_NAME, "鲟鱼卵")
 	CASE "QUANTITY：鲟鱼卵"
 		CALLF MAKE_INT(V_NAME, 1)
-		CALLF MAKE_INT(V_NAME, 20)
 ENDSELECT
 
 @EXIST_酒データ119; 生活系统大修：待腌制的咸鸭蛋（清酒中腌制14天→咸鸭蛋）
