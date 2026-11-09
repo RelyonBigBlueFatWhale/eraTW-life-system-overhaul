@@ -116,12 +116,15 @@ ELSEIF LOCAL:1 > 0
 ELSE
         PRINTL [0] 返回
 ENDIF
-IF 生活系统_鱼塘请求:塘号 == 1
-        PRINTL [7] 放入鱼　　[8] 喂食　　[9] 完成请求
-ELSE
+;注：[7]放入鱼 / [8]喂食 与请求无关（恒可用），只有 [9]完成请求 需要「进行中请求」
+PRINTFORM [7] 放入鱼　　[8] 喂食　　
+IF 生活系统_鱼塘请求:塘号 != 1
         SETCOLOR C_GRAY
-        PRINTL [7] 放入鱼　　[8] 喂食　　[9] 完成请求
+        PRINTFORM [9] 完成请求
         RESETCOLOR
+        PRINTL
+ELSE
+        PRINTL [9] 完成请求
 ENDIF
 INPUT
 SELECTCASE RESULT
