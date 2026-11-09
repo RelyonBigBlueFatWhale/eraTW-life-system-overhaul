@@ -80,6 +80,8 @@ ELSE
 			PRINTFORMW 「咿呀……嘛、毕竟我也不是做扫帚的专家、还是稍微费了点功夫的」
 		ELSEIF FLAG:作成中家具 == 914
 			PRINTFORMW 「橡木做的酒桶。每个桶都是独立的手工制品、仔细用吧」
+		ELSEIF FLAG:作成中家具 == 915
+			PRINTFORMW 「橡木做的蜂箱。每个箱都是独立的手工制品、仔细用吧」
 		ELSEIF ITEM:(FLAG:作成中家具) == 2
 			PRINTFORMW 「哎呀……真是久违的满意之作啊。这简直就是匠人的无上荣光啊。」
 		ELSEIF ITEM:(FLAG:作成中家具) == 1 
@@ -132,7 +134,8 @@ SELECTCASE RESULT
 		$INPUT_LOOP01
 		;列表の呼び出し
 		削除行数 = 0
-		FOR LOCAL, 902, 917
+		;生活系统大修：917（鱼子酱打捞具）也须进列表，故上界取 918
+		FOR LOCAL, 902, 918
 			削除行数 ++
 			;酒桶（生活系统大修·酿酒）：数量制（最多5个），不适用等级制显示
 			IF LOCAL == [[酒桶]]
@@ -225,6 +228,9 @@ SELECTCASE RESULT
 					CLEARLINE 削除行数 + 1
 					GOTO INPUT_LOOP01
 				ELSEIF リザルト == 910
+					;隙间耕地为实绩奖励，不在家具屋贩售
+					CLEARLINE 削除行数 + 1
+					GOTO INPUT_LOOP01
 				ELSEIF リザルト == 916
 					CLEARLINE 削除行数 + 1
 					GOTO INPUT_LOOP01
@@ -234,15 +240,14 @@ SELECTCASE RESULT
 				ELSEIF !生活系统_鱼塘 && リザルト == 917
 					CLEARLINE 削除行数 + 1
 					GOTO INPUT_LOOP01
-					CLEARLINE 削除行数 + 1
-					GOTO INPUT_LOOP01
 				ENDIF
 				IF INRANGE(リザルト, 909, 913) && リザルト != 911 && ITEM:リザルト >= 1 || (リザルト == 917 && ITEM:リザルト >= 1)
 					CLEARLINE 削除行数 + 1
 					GOTO INPUT_LOOP01
 				ENDIF
 				;Lv3の時は選択できない（酒桶914为数量制：满5个时不可再订）
-				IF ITEM:リザルト >= 3 || (リザルト == 914 && ITEM:リザルト >= 5) || (リザルト == 915 && ITEM:リザルト >= 8)
+				;生活系统大修：914/915 是数量制（0~5 / 0~8），不能套用等级制的「>=3 已满」判定
+				IF (!GROUPMATCH(リザルト, 914, 915) && ITEM:リザルト >= 3) || (リザルト == 914 && ITEM:リザルト >= 5) || (リザルト == 915 && ITEM:リザルト >= 8)
 					CLEARLINE 削除行数 + 1
 					GOTO INPUT_LOOP01
 				ENDIF
@@ -315,6 +320,9 @@ SELECTCASE RESULT
 		IF リザルト == 914
 			;酒桶（生活系统大修·酿酒）：数量制，追加订购一个
 			CALL ASK_M("再订一个酒桶", MONEY >= TradePrice && ITEM:914 < 5, "算了", 1)
+		ELSEIF リザルト == 915
+			;蜂箱（生活系统大修·养蜂）：数量制，追加订购一个
+			CALL ASK_M("再订一个蜂箱", MONEY >= TradePrice && ITEM:915 < 8, "算了", 1)
 		ELSEIF ITEM:リザルト == 0
 			CALL ASK_M("做这个家具", MONEY >= TradePrice, "算了", 1)
 		ELSE
@@ -457,6 +465,8 @@ SELECTCASE ARG
 		PRINTFORM …每日自动抚摸饲育生物提升好感度
 	CASE 914
 		PRINTFORM …橡木制成的酿酒桶，每拥有一个可在「察看酒虫的情况」中使用一个独立的酿酒桶（最多5个）
+	CASE 915
+		PRINTFORM …可以在「养蜂」中使用的橡木蜂箱（最多8个）
 	CASEELSE
 		PRINT 
 ENDSELECT
@@ -565,35 +575,36 @@ SELECTCASE F_ID
 		期間 = 30
 	;橡木酒桶（生活系统大修·酿酒）
 	CASE 914
-;蜂箱（生活系统大修养蜂）：橡木制，首个5天、之后3天
-CASE 915
-資材番号 = 9;ナラ(橡木)
-軽減上限 = 5
-最低額 = 100000
-期間 = 5
-;鱼子酱打捞具（生活系统大修鱼塘）
-CASE 917
-資材番号 = 4;青冈木
-軽減上限 = 2
-最低額 = 50000
-期間 = 3
 		資材番号 = 9;ナラ(栎木)
 		軽減上限 = 8
 		最低額 = 600000
 		期間 = 20
+	;蜂箱（生活系统大修养蜂）：橡木制，首个5天、之后3天
+	CASE 915
+		資材番号 = 9;ナラ(橡木)
+		軽減上限 = 5
+		最低額 = 100000
+		期間 = 5
+	;鱼子酱打捞具（生活系统大修鱼塘）
+	CASE 917
+		資材番号 = 4;青冈木
+		軽減上限 = 2
+		最低額 = 50000
+		期間 = 3
 ENDSELECT
 
 ;Lv1→Lv2時は半分  Lv2→Lv3時は最初と同じで
 ;MaxDiscount = ITEMPRICE:F_ID - 最低額
 ;酒桶914为数量制（0～5个），非等级制，不适用强化减价
 IF EnhanceTime == 1 && F_ID != 914
-SIF F_ID == 915 && EnhanceTime >= 1
-	期間 = 3
 	軽減上限 /= 2
 	最低額 /= 2
 	期間 /= 2
 	;MaxDiscount /= 2
 ENDIF
+;蜂箱强化后期間缩短为3天（与上游一致：独立于减价半减）
+SIF F_ID == 915 && EnhanceTime >= 1
+	期間 = 3
 
 SIF ARGS == "資材番号"
 	RETURNF 資材番号
