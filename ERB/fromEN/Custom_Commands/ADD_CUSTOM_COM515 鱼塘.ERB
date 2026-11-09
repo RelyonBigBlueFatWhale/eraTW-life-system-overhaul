@@ -126,10 +126,13 @@ ENDIF
 INPUT
 SELECTCASE RESULT
         CASE 1 TO 5
-                SIF RESULT <= LOCAL:1
+                ;注：IF/ENDIF 包住整段 —— SIF 只保护 1 行，写成 SIF 会让最后的
+                ;    RETURN 1 无条件执行（选中本页不存在的槽位时直接退出鱼塘界面）
+                IF RESULT <= LOCAL:1
                         CALL 鱼塘_单鱼(塘号, LOCAL:3 + RESULT - 1)
                         SIF RESULT
                                 RETURN 1
+                ENDIF
         CASE 6
                 SIF LOCAL:1 > 5
                         生活系统_鱼塘页码 = 生活系统_鱼塘页码 + 1
@@ -182,9 +185,12 @@ SELECTCASE RESULT
                 PRINTFORMW 把这条鱼收回了隙间渔获。
                 RETURN 1
         CASE 2
-                SIF ITEM:魚 + 1 > 99
+                ;注：IF/ENDIF 包住整段 —— SIF 只保护 1 行，写成 SIF 会让 RETURN 1
+                ;    无条件执行，导致「取鱼肉」永远拿不到鱼（玩家表现为点了没反应）
+                IF ITEM:魚 + 1 > 99
                         PRINTFORMW 背包里的鱼放不下了
                         RETURN 1
+                ENDIF
                 ITEM:魚 += 1
                 CALL 生活系统_鱼塘_移除(塘号, 槽)
                 PRINTFORMW 取出了这条鱼的鱼肉。
