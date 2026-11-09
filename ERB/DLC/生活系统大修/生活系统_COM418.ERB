@@ -251,6 +251,9 @@ IF ITEM:RESULT && (STRCOUNT(ITEMNAME:RESULT, "苗") || INRANGE(RESULT, 193, 219)
 	PLANT_DRY:ARG = 1
 	;生活系统大修：重置已收果期标记
 	PLANT_HARVESTED:ARG = 0
+	;生活系统大修：新种下 → 清除上一株遗留的授粉标记（授粉加成按「同株一次」计，
+	;    否则 mark=1 会一直占位，该畝此后永远不再被授粉；mark=2 则会给新株白送加成）
+	生活系统_授粉标记:ARG = 0
 	;三粒の天滴を持っている場合、植えてすぐに施肥、水撒き完了状態に
 	IF ITEM:三粒の天滴
 		PLANT_DRY:ARG = 0
