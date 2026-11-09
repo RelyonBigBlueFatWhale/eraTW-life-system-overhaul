@@ -49,7 +49,9 @@ RETURN
 @生活系统_养蜂_授粉结算
 #LOCALSIZE 3
 #LOCALSSIZE 1
-FOR LOCAL, 1, 生活系统_畝数() + 1
+;注：畝下标为 0-based（与 COMF418 的 SHOW_PLANT / 一键播种 / 菜园生长一致），范围 0..畝数()-1。
+;    写成 1..畝数() 会漏掉第 0 畝，并在畝数()=240（隙间耕地满开垦）时越界
+FOR LOCAL, 0, 生活系统_畝数()
         SIF 生活系统_授粉标记:LOCAL
                 CONTINUE
         SIF !生活系统_异花授粉作物(PLANT_TYPE:LOCAL)
@@ -249,7 +251,8 @@ RETURN
 @生活系统_花田妖精授粉
 #LOCALSIZE 1
 #LOCALSSIZE 1
-FOR LOCAL, 1, 生活系统_畝数() + 1
+;注：畝下标 0-based，范围 0..畝数()-1（同上，勿写成 1..畝数()）
+FOR LOCAL, 0, 生活系统_畝数()
         SIF !生活系统_异花授粉作物(PLANT_TYPE:LOCAL)
                 CONTINUE
         SIF !INRANGE(PLANT_GROW:LOCAL, 6, 7)
@@ -302,7 +305,8 @@ RETURN LOCAL
 #FUNCTION
 #LOCALSIZE 1
 #LOCALSSIZE 1
-FOR LOCAL, 1, 生活系统_畝数() + 1
+;注：畝下标 0-based，范围 0..畝数()-1（同上，勿写成 1..畝数()）
+FOR LOCAL, 0, 生活系统_畝数()
         SIF PLANT_TYPE:LOCAL != [[彼岸花球根]]
                 CONTINUE
         SIF INRANGE(PLANT_GROW:LOCAL, 6, 7)
